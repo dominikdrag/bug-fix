@@ -423,6 +423,10 @@ Let the workflow guide you through all 7 phases.
 - The hypothesis might have been incorrect
 - Additional root causes may exist
 
+## Acknowledgments
+
+This plugin is based on the [feature-dev plugin](https://github.com/anthropics/claude-code/tree/main/plugins/feature-dev) from Anthropic's official Claude Code repository.
+
 ## Author
 
 Dominik Drag
