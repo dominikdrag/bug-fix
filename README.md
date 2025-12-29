@@ -42,6 +42,35 @@ Or simply:
 
 The command will guide you through the entire process interactively.
 
+## Command: `/test-check`
+
+Quickly run tests related to your code changes without the full bug-fix workflow.
+
+**Usage:**
+```bash
+# Test recent changes (uses git diff)
+/test-check
+
+# Test specific file
+/test-check src/services/auth.ts
+
+# Test multiple files
+/test-check src/api/users.ts src/api/auth.ts
+```
+
+**What it does:**
+- Detects your test framework (Jest, Vitest, Pytest, etc.)
+- Finds tests related to the specified files
+- Runs only relevant tests (not the full suite)
+- Analyzes results and reports failures
+- Identifies coverage gaps
+- Suggests new tests if needed
+
+**When to use:**
+- After making any code changes
+- Before committing to verify nothing broke
+- When you want quick test feedback without full investigation
+
 ## The 7-Phase Workflow
 
 ### Phase 1: Discovery
@@ -187,41 +216,59 @@ Which approach would you like to use?
 - Uses fix approach chosen in Phase 4
 - Explains changes made after completion
 
-### Phase 6: Fix Review
+### Phase 6: Fix Review & Test Validation
 
-**Goal**: Validate the fix doesn't introduce new issues
+**Goal**: Validate the fix is correct, safe, and passes tests
 
 **What happens:**
-- Launches 3 `bug-fix-reviewer` agents in parallel:
+
+**All 4 agents launch in parallel for faster feedback:**
+
+- 3x `bug-fix-reviewer` agents:
   - **Fix Correctness**: Does it address root cause?
   - **Regression Risk**: Could it break existing functionality?
   - **Edge Cases**: Are boundary conditions handled?
-- Consolidates findings
-- **Presents findings and asks what you want to do**:
-  - Fix now
+
+- 1x `bug-test-runner` agent:
+  - Detects the project's test framework
+  - Finds and runs tests related to modified files
+  - Analyzes test results
+  - Identifies coverage gaps
+  - Suggests new tests if needed
+
+**After all agents complete:**
+- Consolidates all findings
+- **Presents results and asks what you want to do**:
+  - Fix issues now
+  - Add tests
   - Fix later
   - Proceed as-is
 
 **Example output:**
 ```
-Fix Review Results:
+Fix Review & Test Results:
 
-Fix Assessment:
+Code Review:
 - Addresses Root Cause: Yes
 - Overall Quality: Good
-- Confidence Level: High
+- Issues Found: 1 (missing edge case)
+
+Test Results:
+- Framework: Jest
+- Related Tests: 3 found
+- Status: 3/3 passing
+- Coverage: Fix is exercised by existing tests
 
 Potential Issues:
 
 1. Missing Edge Case (Confidence: 82%)
    Location: src/services/saveService.ts:52
    Issue: Doesn't handle empty document case
-   Impact: Could throw on new document save
    Suggested Fix: Add empty check before version compare
 
-Side Effects:
-- No breaking changes to existing callers
-- Performance unchanged
+Suggested Tests:
+- Add test for empty document save scenario
+- Add test for concurrent save handling
 
 What would you like to do?
 ```
@@ -329,10 +376,27 @@ Prevention:
 - Convention compliance
 
 **When triggered:**
-- Automatically in Phase 6
+- Automatically in Phase 6 (Part A: Code Review)
 - Can be invoked manually after writing fixes
 
 **Model**: Opus (thorough validation)
+
+### `bug-test-runner`
+
+**Purpose**: Validates fixes through automated testing
+
+**Focus areas:**
+- Test framework detection
+- Related test discovery
+- Test execution and result analysis
+- Coverage gap identification
+- New test suggestions
+
+**When triggered:**
+- Automatically in Phase 6 (Part B: Test Validation)
+- Can be invoked manually to run tests for any code changes
+
+**Model**: Sonnet (fast execution)
 
 ## Usage Patterns
 
@@ -363,6 +427,11 @@ Let the workflow guide you through all 7 phases.
 **Review a fix:**
 ```
 "Launch bug-fix-reviewer to check my recent changes"
+```
+
+**Run tests for changes:**
+```
+"Launch bug-test-runner to find and run tests for src/services/auth.ts"
 ```
 
 ## Best Practices

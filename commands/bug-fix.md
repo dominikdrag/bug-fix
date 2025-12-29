@@ -131,22 +131,47 @@ Initial request: $ARGUMENTS
 
 ---
 
-## Phase 6: Fix Review
+## Phase 6: Fix Review & Test Validation
 
-**Goal**: Validate the fix is correct and doesn't introduce new issues
+**Goal**: Validate the fix is correct, doesn't introduce new issues, and passes tests
 
 **Actions**:
-1. Launch 3 bug-fix-reviewer agents in parallel with different focuses:
-   - Fix correctness (does it actually address root cause?)
-   - Regression risk (could it break existing functionality?)
-   - Edge cases and side effects
 
-2. Consolidate findings and identify highest severity issues
-3. **Present findings to user and ask what they want to do**:
-   - Fix now (address issues before proceeding)
+### Part A: Parallel Validation (launch all 4 agents simultaneously)
+1. Launch all validation agents **in parallel** in a single message:
+
+   **Code Review Agents (3x bug-fix-reviewer)**:
+   - Agent 1: Fix correctness (does it actually address root cause?)
+   - Agent 2: Regression risk (could it break existing functionality?)
+   - Agent 3: Edge cases and side effects
+
+   **Test Validation Agent (1x bug-test-runner)**:
+   - Discover the project's test framework
+   - Find tests related to the modified files
+   - Run related tests
+   - Analyze results and identify coverage gaps
+   - Suggest new tests if the fix lacks coverage
+
+### Part B: Consolidate Results
+2. Wait for all agents to complete
+3. Consolidate findings:
+   - Code review issues from all 3 reviewers
+   - Test results (pass/fail/no tests)
+   - Coverage assessment
+   - Overall confidence level
+
+### Part C: Decision
+4. **Present consolidated findings to user**:
+   - Code review issues (if any)
+   - Test results (pass/fail/no tests)
+   - Coverage gaps identified
+   - Overall confidence level
+
+5. **Ask what they want to do**:
+   - Fix issues now (address code review issues or failing tests)
+   - Add tests (if coverage gaps identified)
    - Fix later (note for future)
    - Proceed as-is (accept current state)
-4. Address issues based on user decision
 
 ---
 
