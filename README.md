@@ -71,6 +71,35 @@ Quickly run tests related to your code changes without the full bug-fix workflow
 - Before committing to verify nothing broke
 - When you want quick test feedback without full investigation
 
+## Command: `/git-history`
+
+Investigate git history to understand when and why code was written.
+
+**Usage:**
+```bash
+# Investigate a specific file
+/git-history src/services/auth.ts
+
+# Investigate multiple files
+/git-history src/api/users.ts src/utils/validate.ts
+
+# No arguments - will ask what to investigate
+/git-history
+```
+
+**What it does:**
+- Uses git blame to find who last modified code
+- Searches commit history for relevant changes
+- Identifies the commit that introduced specific code
+- Analyzes original developer intent from commit messages
+- Finds related commits and previous fix attempts
+
+**When to use:**
+- When you need to understand why code was written a certain way
+- To find when a bug was introduced
+- To identify who to consult about specific code
+- Before making changes to understand the history
+
 ## The 7-Phase Workflow
 
 ### Phase 1: Discovery
@@ -104,11 +133,12 @@ Claude: Let me understand this bug...
 - Agents return comprehensive analyses with key files to read
 - Claude reads all identified files to build deep understanding
 - Presents comprehensive summary of findings
+- Saves key files list for historian in Phase 3
 
 **Agents launched:**
-- "Trace the execution path from [trigger] to [symptom]"
-- "Map the error handling and edge cases in [area]"
-- "Explore the data flow and state management in [component]"
+- `bug-explorer`: "Trace the execution path from [trigger] to [symptom]"
+- `bug-explorer`: "Map the error handling and edge cases in [area]"
+- `bug-explorer`: "Explore the data flow and state management in [component]"
 
 **Example output:**
 ```
@@ -122,19 +152,29 @@ Key files to understand:
 - src/services/saveService.ts - Main save orchestration
 - src/api/documents.ts:112 - API error handling
 - src/utils/validate.ts:78 - Validation logic
+
+Areas of concern:
+- saveService.ts:45 - Complex async logic
+- documents.ts:120 - Error handling looks incomplete
 ```
 
-### Phase 3: Investigation
+### Phase 3: Investigation & History
 
-**Goal**: Identify potential root causes through systematic analysis
+**Goal**: Identify potential root causes AND understand when/why the code was written
 
 **What happens:**
-- Launches 2-3 `bug-investigator` agents in parallel
-- Each analyzes for different bug patterns:
+- Launches all agents **in parallel** for maximum efficiency:
+  - 2-3 `bug-investigator` agents (code analysis)
+  - 1 `bug-historian` agent (git history analysis)
+- Investigators analyze for different bug patterns:
   - Null/undefined handling issues
   - Race conditions and timing issues
   - Logic errors and state management
-- Consolidates findings with confidence scores
+- Historian analyzes git history of key files from Phase 2:
+  - Uses git blame on suspicious code
+  - Finds when problematic code was introduced
+  - Understands original developer intent
+- Consolidates findings with confidence scores and historical context
 - Presents findings prioritized by likelihood
 
 **Example output:**
@@ -152,6 +192,13 @@ High Confidence Findings:
    Issue: Network timeout not caught
    Evidence: Catch block only handles specific error types
    Could cause: Unhandled promise rejection
+
+Historical Context:
+- Culprit commit: abc1234 (2 weeks ago)
+- Author: developer@example.com
+- Message: "Optimize save performance by batching"
+- The race condition was introduced when save was refactored
+- Original code had proper locking, removed during optimization
 ```
 
 ### Phase 4: Hypothesis Formation
@@ -332,6 +379,24 @@ Prevention:
 
 **Model**: Sonnet (fast exploration)
 
+### `bug-historian`
+
+**Purpose**: Uses git history to find when and why bugs were introduced
+
+**Focus areas:**
+- Git blame analysis on suspicious code
+- Commit history search
+- Finding the culprit commit
+- Understanding original developer intent
+- Identifying previous fix attempts
+
+**When triggered:**
+- Automatically in Phase 3 (alongside bug-investigator, after key files identified)
+- Can be invoked manually via `/git-history` command
+- Can be invoked manually to investigate code history
+
+**Model**: Opus (deep analysis of intent and history)
+
 ### `bug-investigator`
 
 **Purpose**: Analyzes code for common bug patterns and potential root causes
@@ -412,6 +477,11 @@ Let the workflow guide you through all 7 phases.
 **Explore bug-related code:**
 ```
 "Launch bug-explorer to trace how the caching system works"
+```
+
+**Investigate git history:**
+```
+"Launch bug-historian to find when src/services/auth.ts was last modified and why"
 ```
 
 **Investigate potential causes:**

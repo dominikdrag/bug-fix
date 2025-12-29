@@ -60,31 +60,44 @@ Initial request: $ARGUMENTS
    - Execution flow with file:line references
    - Key components involved
    - Potential areas of concern identified
+4. **Save the list of key files** for the historian agent in Phase 3
 
 ---
 
-## Phase 3: Investigation
+## Phase 3: Investigation & History
 
-**Goal**: Identify potential root causes through systematic analysis
+**Goal**: Identify potential root causes AND understand when/why the code was written
 
 **CRITICAL**: This is where deep analysis happens. DO NOT SKIP.
 
 **Actions**:
-1. Launch 2-3 bug-investigator agents in parallel with different focuses:
+1. Launch all investigation agents **in parallel** (2-3 bug-investigator + 1 bug-historian):
+
+   **Bug Investigator Agents (2-3x)** - analyze the code for issues:
    - Common bug patterns (null handling, race conditions, logic errors)
    - State management and data flow issues
    - Error handling gaps and edge cases
 
-   **Example agent prompts**:
+   **Example investigator prompts**:
    - "Analyze [code area] for null/undefined handling issues, race conditions, and logic errors"
    - "Examine state management in [component] for potential issues"
    - "Check error handling completeness in [execution path]"
 
-2. Consolidate findings from all investigators
+   **Bug Historian Agent (1x)** - analyze git history of key files from Phase 2:
+   - Use git blame on the specific files/lines identified as suspicious
+   - Find when the problematic code was introduced
+   - Understand the original intent of the code
+   - Look for previous attempts to fix similar issues
+
+   **Example historian prompt**:
+   - "Investigate git history of [key files from Phase 2] to find when and why the suspicious code was written, and identify the commit that may have introduced the bug"
+
+2. Consolidate findings from all agents
 3. Present findings with confidence scores:
    - Potential issues found with file:line references
    - Evidence supporting each finding
    - Prioritized by confidence level
+   - **Historical context**: Culprit commit, original intent, previous fix attempts
 
 ---
 
