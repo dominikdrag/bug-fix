@@ -4,7 +4,7 @@ A comprehensive, structured workflow for finding and fixing bugs with specialize
 
 ## Overview
 
-The Bug Fix Plugin provides a systematic 7-phase approach to debugging. Instead of jumping straight into code changes, it guides you through understanding the bug, exploring the codebase, investigating potential causes, forming hypotheses, and validating fixes—resulting in more accurate root cause identification and robust fixes.
+The Bug Fix Plugin provides a systematic 7-phase approach to debugging. Instead of jumping straight into code changes, it guides you through understanding the bug, exploring the codebase, investigating potential causes, forming hypotheses, and validating fixes - resulting in more accurate root cause identification and robust fixes.
 
 ## Installation
 
