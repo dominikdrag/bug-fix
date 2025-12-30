@@ -71,9 +71,9 @@ Initial request: $ARGUMENTS
 **CRITICAL**: This is where deep analysis happens. DO NOT SKIP.
 
 **Actions**:
-1. Launch all investigation agents **in parallel** (2-3 bug-investigator + 1 bug-historian):
+1. Launch all investigation agents **in parallel** (3 bug-investigator + 1 bug-historian):
 
-   **Bug Investigator Agents (2-3x)** - analyze the code for issues:
+   **Bug Investigator Agents (3x)** - analyze the code for issues:
    - Common bug patterns (null handling, race conditions, logic errors)
    - State management and data flow issues
    - Error handling gaps and edge cases
@@ -106,7 +106,7 @@ Initial request: $ARGUMENTS
 **Goal**: Form specific hypotheses about root cause and propose fix approaches
 
 **Actions**:
-1. Launch 2-3 bug-hypothesis agents in parallel with different focuses:
+1. Launch 3 bug-hypothesis agents in parallel with different focuses:
    - Most likely hypothesis based on evidence
    - Alternative hypothesis considering edge cases
    - Comprehensive analysis considering systemic issues
