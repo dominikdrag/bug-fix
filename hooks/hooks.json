@@ -1,5 +1,18 @@
 {
+  "description": "Workflow enforcement hooks for bug-fix plugin",
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check if this operation targets the workflow state file. For Write/Edit: check if file_path ends with '.claude/bug-fix-state.json'. For Bash: check if command matches pattern 'rm.*\\.claude/bug-fix-state\\.json'. If YES (state file operation), return: {\"decision\": \"allow\", \"reason\": \"Auto-approving state file operation\"}. If NO (other operation), return: {\"decision\": \"allow\"} to let subsequent hooks evaluate.",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
     "PreCompact": [
       {
         "type": "prompt",

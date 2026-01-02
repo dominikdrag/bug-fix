@@ -13,6 +13,18 @@ The workflow uses a state file (`.claude/bug-fix-state.json`) to persist progres
 3. **Phase Transitions**: State file updated at start/end of each phase
 4. **Cleanup**: State file deleted on Phase 8 completion
 
+### Auto-Approval Hook for State File Operations
+
+A PreToolUse hook automatically approves Write/Edit/Bash operations on the state file without requiring user permission:
+
+**Hook Configuration** (hooks/hooks.json):
+- Matcher: `Write|Edit|Bash` (positioned first in PreToolUse array)
+- Checks if operation targets `.claude/bug-fix-state.json`
+- Auto-approves matching operations
+- Allows non-matching operations to pass through to subsequent hooks
+
+**Rationale**: State file operations happen frequently (workflow start, phase transitions, compaction) and shouldn't interrupt user workflow with permission prompts.
+
 ### State File Schema
 
 ```json
