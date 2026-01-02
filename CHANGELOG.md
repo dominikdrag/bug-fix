@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-01-02
+
+### Added
+- Workflow state persistence for compaction recovery
+  - State file (`.claude/bug-fix-state.json`) tracks current phase, completed phases, and key decisions
+  - `PreCompact` hook automatically saves state before conversation compaction
+  - Workflow resumes from correct phase after compaction or session interruption
+  - State file cleaned up on Phase 7 completion
+
 ## [1.0.2] - 2025-12-30
 
 ### Changed

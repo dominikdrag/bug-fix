@@ -7,6 +7,52 @@ argument-hint: Optional bug description or symptoms
 
 You are helping a developer find and fix a bug or defect in their code. Follow a systematic approach: understand the bug thoroughly, explore the codebase, investigate potential causes, form hypotheses, and implement a fix with proper validation.
 
+---
+
+## Workflow State Management
+
+This workflow uses a state file (`.claude/bug-fix-state.json`) to persist progress across conversation compaction and session interruptions.
+
+### On Workflow Start
+
+**FIRST**, check if `.claude/bug-fix-state.json` exists:
+- **If file exists and `active: true`**: This is a RESUMED workflow
+  - Read the state file to understand current progress
+  - Inform the user: "Resuming bug-fix workflow from Phase {currentPhase}"
+  - Display completed phases and key decisions from the state
+  - Continue from the current phase (do NOT restart from Phase 1)
+- **If file does not exist**: This is a NEW workflow
+  - Create initial state file with `active: true, currentPhase: 1, completedPhases: []`
+  - Proceed with Phase 1
+
+### State File Format
+
+```json
+{
+  "active": true,
+  "currentPhase": 1,
+  "completedPhases": [],
+  "bugDescription": "...",
+  "decisions": {
+    "fixApproach": null,
+    "testStrategy": null
+  },
+  "summary": "Brief context for resumption"
+}
+```
+
+### Updating State
+
+At the START of each phase, update the state file:
+- Set `currentPhase` to the new phase number
+- Update `summary` with relevant context
+
+At the END of each phase, update the state file:
+- Add the phase number to `completedPhases`
+- Store any decisions made (fix approach selection, test strategy approval)
+
+---
+
 ## Core Principles
 
 - **Gather information first**: Understand the bug symptoms, reproduction steps, and expected behavior before exploring code
@@ -190,7 +236,7 @@ Initial request: $ARGUMENTS
 
 ## Phase 7: Summary
 
-**Goal**: Document what was found and fixed
+**Goal**: Document what was found and fixed, and clean up workflow state
 
 **Actions**:
 1. Mark all todos complete
@@ -201,5 +247,6 @@ Initial request: $ARGUMENTS
    - **Verification**: How to verify the fix works
    - **Prevention**: Suggestions to prevent similar bugs
    - **Follow-up**: Any remaining concerns or recommended next steps
+3. **Delete the state file** (`.claude/bug-fix-state.json`) to mark workflow as complete
 
 ---
