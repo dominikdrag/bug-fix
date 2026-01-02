@@ -190,51 +190,123 @@ Initial request: $ARGUMENTS
 
 ---
 
-## Phase 6: Fix Review & Test Validation
+## Phase 6: Testing
 
-**Goal**: Validate the fix is correct, doesn't introduce new issues, and passes tests
+**Goal**: Ensure the fix is properly tested with user-approved strategy
+
+**Approach**: Use a `bug-test-analyzer` agent to propose test cases covering the bug scenario and edge cases, present analysis to user for approval, then write tests directly (not delegated) to preserve fix context. Use `bug-test-runner` agent to execute tests and report results.
 
 **Actions**:
+1. Launch 1 `bug-test-analyzer` agent to analyze the fix:
+   - Identify what should be tested to prevent regression
+   - Propose test cases covering the bug scenario
+   - Identify edge cases related to the bug
+   - Note the total number of tests proposed
+2. Present the test analysis to user:
+   - Summarize the proposed test categories
+   - List key test cases with their purposes
+   - Highlight any mocking requirements or special setup needed
+3. Use `AskUserQuestion` to get EXPLICIT confirmation:
+   - Option 1: "Proceed with proposed testing strategy"
+   - Option 2: "Modify testing scope" (user describes changes)
+   - Option 3: "Skip testing phase"
+4. If user selects "Modify testing scope":
+   - Wait for user to describe their modifications
+   - Incorporate feedback into test plan
+5. Write tests following the confirmed plan and project conventions:
+   - Bug reproduction test (verifies fix resolves the original issue)
+   - Edge cases exposed by the bug
+   - Regression prevention tests
+6. **Execute tests using `bug-test-runner` agent**:
+   - Pass the test files/patterns from the approved test plan
+   - Agent runs tests and returns structured results
+7. **Handle test results**:
+   - If all tests pass, proceed to Phase 7
+   - If tests fail:
+     - Review the failure report from `bug-test-runner`
+     - Fix the failing tests (adjust test code or implementation as needed)
+     - Re-run `bug-test-runner` until all pass
 
-### Part A: Parallel Validation (launch all 4 agents simultaneously)
-1. Launch all validation agents **in parallel** in a single message:
+**CRITICAL**: Do NOT write tests until user has made an explicit selection via `AskUserQuestion`.
 
-   **Code Review Agents (3x bug-fix-reviewer)**:
-   - Agent 1: Fix correctness (does it actually address root cause?)
-   - Agent 2: Regression risk (could it break existing functionality?)
-   - Agent 3: Edge cases and side effects
+**Why this approach**:
+- Analyzer agent provides structured test proposals focused on regression prevention
+- User approval ensures alignment with expectations before effort is spent
+- Writing tests directly preserves local context from the fix implementation
+- Test-runner agent provides structured, parseable test results
 
-   **Test Validation Agent (1x bug-test-runner)**:
-   - Discover the project's test framework
-   - Find tests related to the modified files
-   - Run related tests
-   - Analyze results and identify coverage gaps
-   - Suggest new tests if the fix lacks coverage
+**Test Quality Standards**:
+- Test names clearly describe what is being tested
+- Each test focuses on a single behavior
+- Tests are independent (no shared state)
+- Follow existing project test patterns exactly
 
-### Part B: Consolidate Results
-2. Wait for all agents to complete
-3. Consolidate findings:
-   - Code review issues from all 3 reviewers
-   - Test results (pass/fail/no tests)
-   - Coverage assessment
-   - Overall confidence level
-
-### Part C: Decision
-4. **Present consolidated findings to user**:
-   - Code review issues (if any)
-   - Test results (pass/fail/no tests)
-   - Coverage gaps identified
-   - Overall confidence level
-
-5. **Ask what they want to do**:
-   - Fix issues now (address code review issues or failing tests)
-   - Add tests (if coverage gaps identified)
-   - Fix later (note for future)
-   - Proceed as-is (accept current state)
+**Output**: User-approved test suite with passing tests
 
 ---
 
-## Phase 7: Summary
+## Phase 7: Quality Review
+
+**Goal**: Ensure fix quality and correctness through user-reviewed findings
+
+**Actions**:
+
+### Step 1: Launch Review Agents
+1. Launch 3 `bug-fix-reviewer` agents in parallel with different focuses:
+   - Agent 1: Fix correctness (does it actually address root cause?)
+   - Agent 2: Regression risk (could it break existing functionality?)
+   - Agent 3: Edge cases and side effects
+2. **Wait for ALL agents to complete** before proceeding
+
+### Step 2: Consolidate Findings
+1. Collect all findings from completed agents
+2. Deduplicate overlapping issues (same file + line + similar description)
+3. Organize by severity:
+   - **Critical Issues** (Confidence 90-100): Must be fixed
+   - **Important Issues** (Confidence 80-89): Should be addressed
+   - **Suggestions** (Confidence < 80): Nice to have improvements
+
+### Step 3: Present Findings to User
+Display consolidated findings in a clear format:
+
+```
+## Review Findings Summary
+
+### Critical Issues ({count})
+1. [FILE:LINE] Description - {confidence}%
+2. ...
+
+### Important Issues ({count})
+1. [FILE:LINE] Description - {confidence}%
+2. ...
+
+### Suggestions ({count})
+1. [FILE:LINE] Description - {confidence}%
+2. ...
+```
+
+### Step 4: User Selection
+Use `AskUserQuestion` with `multiSelect: true` to let user choose which issues to address:
+- List each issue as a selectable option
+- Group by severity in the question
+- Include "Skip all - proceed to summary" as an option
+
+### Step 5: Apply Selected Fixes
+1. Apply fixes ONLY for issues the user selected
+2. Track which fixes were applied for the summary
+
+### Step 6: Offer Re-review
+If any fixes were applied, use `AskUserQuestion` to ask:
+- "Run review again to verify fixes?"
+- "Proceed to summary"
+
+If user chooses re-review, return to Step 1 with a focused scope.
+
+**Output**: Quality-verified fix with user-approved changes
+
+---
+
+## Phase 8: Summary
 
 **Goal**: Document what was found and fixed, and clean up workflow state
 

@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-01-02
+
+### Added
+- `bug-test-analyzer` agent (Opus) for proposing comprehensive test plans focused on regression prevention
+- Phase 6: Testing - dedicated testing phase with user approval gate
+  - Analyzer proposes test cases before writing
+  - User must confirm via `AskUserQuestion` (proceed, modify scope, or skip)
+  - Tests written directly to preserve fix context
+  - Uses `bug-test-runner` for test execution
+- Phase 7: Quality Review - user-driven fix selection with structured workflow
+  - Waits for ALL review agents to complete before proceeding
+  - Consolidates and deduplicates findings, organized by severity (Critical 90-100, Important 80-89)
+  - Uses `AskUserQuestion` with `multiSelect: true` for per-issue selection
+  - Applies only the fixes user explicitly selected
+  - Offers re-review loop after fixes applied
+
+### Changed
+- Phase 6 split into two separate phases (Testing and Quality Review)
+- `bug-fix-reviewer` output format standardized to match severity categories (Critical/Important)
+- Phase numbering updated: previous Phase 7 (Summary) is now Phase 8
+- State file now tracks 8 phases instead of 7
+- State file schema updated to include `testStrategy` in decisions object
+- PreCompact hook updated to reference 8-phase workflow
+
 ## [1.0.3] - 2026-01-02
 
 ### Added

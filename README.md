@@ -4,7 +4,7 @@ A comprehensive, structured workflow for finding and fixing bugs with specialize
 
 ## Overview
 
-The Bug Fix Plugin provides a systematic 7-phase approach to debugging. Instead of jumping straight into code changes, it guides you through understanding the bug, exploring the codebase, investigating potential causes, forming hypotheses, and validating fixes - resulting in more accurate root cause identification and robust fixes.
+The Bug Fix Plugin provides a systematic 8-phase approach to debugging. Instead of jumping straight into code changes, it guides you through understanding the bug, exploring the codebase, investigating potential causes, forming hypotheses, implementing and testing fixes, and validating quality - resulting in more accurate root cause identification and robust fixes.
 
 ## Installation
 
@@ -100,7 +100,7 @@ Investigate git history to understand when and why code was written.
 - To identify who to consult about specific code
 - Before making changes to understand the history
 
-## The 7-Phase Workflow
+## The 8-Phase Workflow
 
 ### Phase 1: Discovery
 
@@ -263,64 +263,109 @@ Which approach would you like to use?
 - Uses fix approach chosen in Phase 4
 - Explains changes made after completion
 
-### Phase 6: Fix Review & Test Validation
+### Phase 6: Testing
 
-**Goal**: Validate the fix is correct, safe, and passes tests
+**Goal**: Ensure the fix is properly tested with user-approved strategy
 
 **What happens:**
 
-**All 4 agents launch in parallel for faster feedback:**
+1. **Test Analysis**: Launches `bug-test-analyzer` agent to:
+   - Identify what should be tested to prevent regression
+   - Propose test cases covering the bug scenario
+   - Identify edge cases related to the bug
+   - Note mocking requirements and special setup
 
-- 3x `bug-fix-reviewer` agents:
-  - **Fix Correctness**: Does it address root cause?
-  - **Regression Risk**: Could it break existing functionality?
-  - **Edge Cases**: Are boundary conditions handled?
+2. **User Approval**: Presents test plan and asks for explicit confirmation:
+   - "Proceed with proposed testing strategy"
+   - "Modify testing scope" (describe changes)
+   - "Skip testing phase"
 
-- 1x `bug-test-runner` agent:
-  - Detects the project's test framework
-  - Finds and runs tests related to modified files
-  - Analyzes test results
-  - Identifies coverage gaps
-  - Suggests new tests if needed
+3. **Test Writing**: If approved, writes tests directly:
+   - Bug reproduction test (verifies fix resolves the issue)
+   - Edge cases exposed by the bug
+   - Regression prevention tests
 
-**After all agents complete:**
-- Consolidates all findings
-- **Presents results and asks what you want to do**:
-  - Fix issues now
-  - Add tests
-  - Fix later
-  - Proceed as-is
+4. **Test Execution**: Launches `bug-test-runner` to run tests and report results
+
+5. **Validation**: Fixes any failing tests and re-runs until all pass
 
 **Example output:**
 ```
-Fix Review & Test Results:
+Test Plan for Null Pointer Fix:
 
-Code Review:
-- Addresses Root Cause: Yes
-- Overall Quality: Good
-- Issues Found: 1 (missing edge case)
-
-Test Results:
+Project Test Patterns:
 - Framework: Jest
-- Related Tests: 3 found
-- Status: 3/3 passing
-- Coverage: Fix is exercised by existing tests
+- Location: __tests__/ co-located with source
+- Naming: *.test.ts
 
-Potential Issues:
+Tests Needed:
 
-1. Missing Edge Case (Confidence: 82%)
-   Location: src/services/saveService.ts:52
-   Issue: Doesn't handle empty document case
-   Suggested Fix: Add empty check before version compare
+Regression Prevention (High Priority):
+1. Test null input handling
+   - Verifies original bug scenario is fixed
+   - Input: null user object
+   - Expected: Returns default user without crash
 
-Suggested Tests:
-- Add test for empty document save scenario
-- Add test for concurrent save handling
+2. Test undefined input handling
+   - Edge case related to bug
+   - Input: undefined user object
+   - Expected: Returns default user without crash
 
-What would you like to do?
+Related Scenarios (Medium Priority):
+3. Test empty object handling
+   - Input: {} empty object
+   - Expected: Returns user with default values
+
+Do you want to proceed with this testing strategy?
 ```
 
-### Phase 7: Summary
+### Phase 7: Quality Review
+
+**Goal**: Ensure fix quality and correctness through user-reviewed findings
+
+**What happens:**
+
+1. **Parallel Review**: Launches 3x `bug-fix-reviewer` agents:
+   - **Agent 1**: Fix correctness (does it address root cause?)
+   - **Agent 2**: Regression risk (could it break existing functionality?)
+   - **Agent 3**: Edge cases and side effects
+
+2. **Consolidation**: Waits for all agents, then organizes findings by severity:
+   - **Critical Issues** (Confidence 90-100): Must be fixed
+   - **Important Issues** (Confidence 80-89): Should be addressed
+   - **Suggestions** (Confidence <80): Nice to have
+
+3. **User Selection**: Presents findings and asks which issues to fix (multi-select):
+   - Each issue is selectable
+   - User chooses which to address
+   - "Skip all - proceed to summary" option available
+
+4. **Apply Fixes**: Only applies the fixes the user selected
+
+5. **Re-review Option**: If fixes applied, asks whether to run review again
+
+**Example output:**
+```
+Review Findings Summary:
+
+Critical Issues (1):
+1. [src/auth.ts:45] Missing null check after user lookup - 95%
+   Impact: Could cause crash if user not found
+   Fix: Add null check before accessing user.id
+
+Important Issues (2):
+1. [src/auth.ts:52] Edge case not handled - 85%
+   Impact: Unexpected behavior for empty username
+   Fix: Add empty string validation
+
+2. [src/auth.ts:67] Potential memory leak - 82%
+   Impact: Event listener not cleaned up
+   Fix: Add cleanup in finally block
+
+Which issues would you like to fix?
+```
+
+### Phase 8: Summary
 
 **Goal**: Document what was found and fixed
 
@@ -430,6 +475,23 @@ Prevention:
 
 **Model**: Opus (deep reasoning)
 
+### `bug-test-analyzer`
+
+**Purpose**: Analyzes bug fixes and proposes comprehensive test plans focused on regression prevention
+
+**Focus areas:**
+- Bug and fix context analysis
+- Project test pattern discovery
+- Regression prevention test proposals
+- Edge case identification
+- Test prioritization
+
+**When triggered:**
+- Automatically in Phase 6 (Testing)
+- Can be invoked manually when planning tests for bug fixes
+
+**Model**: Opus (advanced reasoning for test planning)
+
 ### `bug-fix-reviewer`
 
 **Purpose**: Reviews fixes for correctness and potential issues
@@ -441,7 +503,7 @@ Prevention:
 - Convention compliance
 
 **When triggered:**
-- Automatically in Phase 6 (Part A: Code Review)
+- Automatically in Phase 7 (Quality Review)
 - Can be invoked manually after writing fixes
 
 **Model**: Opus (thorough validation)
@@ -458,8 +520,9 @@ Prevention:
 - New test suggestions
 
 **When triggered:**
-- Automatically in Phase 6 (Part B: Test Validation)
+- Automatically in Phase 6 (Testing)
 - Can be invoked manually to run tests for any code changes
+- Can be invoked manually via `/test-check` command
 
 **Model**: Sonnet (fast execution)
 
@@ -510,7 +573,7 @@ Let the workflow guide you through all 7 phases.
 2. **Answer questions thoroughly**: Phase 1 sets the foundation for everything else
 3. **Read the exploration findings**: Phase 2 reveals important context
 4. **Choose fix approach deliberately**: Consider urgency vs long-term maintainability
-5. **Don't skip review**: Phase 6 catches issues before they reach production
+5. **Don't skip testing and review**: Phases 6-7 catch issues before they reach production
 
 ## When to Use This Plugin
 

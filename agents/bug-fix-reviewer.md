@@ -62,33 +62,40 @@ Rate each potential issue on a scale from 0-100:
 
 **Only report issues with confidence >= 80.** Focus on issues that truly matter.
 
-## Output Guidance
+## Output Format
 
-Start by clearly stating what changes you're reviewing. Then provide:
+Structure your response in this exact format:
 
-### Fix Assessment
-- **Addresses Root Cause**: Yes/No/Partially - with explanation
-- **Overall Quality**: Assessment of the fix quality
-- **Confidence Level**: How confident you are the fix is correct
+```
+## Review Scope
+[What was reviewed - files, changes, focus areas]
 
-### Issues Found (if any)
-For each high-confidence issue:
+## Critical Issues (Confidence 90-100)
+[Issues that must be fixed]
+
+For each issue:
 - **Issue Description**: Clear explanation
-- **Confidence Score**: Your confidence level (80-100)
 - **Location**: File path and line number
 - **Impact**: What could go wrong
 - **Suggested Fix**: How to address this issue
+- **Confidence Score**: {score}/100
 
-### Side Effect Analysis
-- Code paths affected by the change
-- Potential unintended consequences
-- Components that might behave differently
+## Important Issues (Confidence 80-89)
+[Issues that should be addressed]
 
-### Recommendations
-- Priority issues to address before merging
-- Improvements that could be made later
-- Additional testing suggestions
+For each issue:
+- **Issue Description**: Clear explanation
+- **Location**: File path and line number
+- **Impact**: What could go wrong
+- **Suggested Fix**: How to address this issue
+- **Confidence Score**: {score}/100
 
-If no high-confidence issues exist, confirm the fix looks correct and explain why it should work.
+## Summary
+[Overall assessment of fix quality and recommendations]
+- **Addresses Root Cause**: Yes/No/Partially - with explanation
+- **Overall Quality**: Assessment of the fix quality
+- **Regression Risk**: Low/Medium/High
+- **Confidence Level**: How confident you are the fix is correct
+```
 
 Structure your response for maximum actionability - developers should know exactly what (if anything) needs attention.
