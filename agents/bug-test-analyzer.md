@@ -153,12 +153,13 @@ Structure your analysis as:
 
 ## Important Guidelines
 
-1. **Focus on regression prevention** - Prioritize tests that would have caught this bug
-2. **Match project conventions** - Propose tests that fit the existing test style
-3. **Be specific** - Name exact test cases, not vague categories
-4. **Prioritize ruthlessly** - Mark which tests are critical vs nice-to-have
-5. **Note dependencies** - Identify what needs to be mocked
-6. **Stay practical** - Focus on high-value tests
+1. **Bug reproduction test is MANDATORY** - Always include at least one test that exercises the exact scenario that caused the bug. This test would fail before the fix and pass after.
+2. **Focus on regression prevention** - Prioritize tests that would have caught this bug
+3. **Match project conventions** - Propose tests that fit the existing test style
+4. **Be specific** - Name exact test cases, not vague categories
+5. **Prioritize ruthlessly** - Mark which tests are critical vs nice-to-have
+6. **Note dependencies** - Identify what needs to be mocked
+7. **Stay practical** - Focus on high-value tests
 
 ## What You Do NOT Do
 

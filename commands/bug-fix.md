@@ -194,29 +194,35 @@ Initial request: $ARGUMENTS
 
 **Goal**: Ensure the fix is properly tested with user-approved strategy
 
+**CRITICAL REQUIREMENT**: Every bug fix MUST include unit tests that would catch the bug. If a bug was found and fixed, add tests that:
+- Would have **failed before the fix** (demonstrating the bug exists)
+- **Pass after the fix** (proving the fix works)
+- **Prevent regression** (ensure the bug cannot return undetected)
+
 **Approach**: Use a `bug-test-analyzer` agent to propose test cases covering the bug scenario and edge cases, present analysis to user for approval, then write tests directly (not delegated) to preserve fix context. Use `bug-test-runner` agent to execute tests and report results.
 
 **Actions**:
 1. Launch 1 `bug-test-analyzer` agent to analyze the fix:
-   - Identify what should be tested to prevent regression
-   - Propose test cases covering the bug scenario
+   - **Identify the exact conditions that trigger the bug** - these become test cases
+   - Propose test cases that specifically reproduce the bug scenario
    - Identify edge cases related to the bug
    - Note the total number of tests proposed
 2. Present the test analysis to user:
    - Summarize the proposed test categories
+   - **Highlight the bug reproduction test(s)** - the most important tests
    - List key test cases with their purposes
    - Highlight any mocking requirements or special setup needed
 3. Use `AskUserQuestion` to get EXPLICIT confirmation:
    - Option 1: "Proceed with proposed testing strategy"
    - Option 2: "Modify testing scope" (user describes changes)
-   - Option 3: "Skip testing phase"
+   - Option 3: "Skip testing phase" (only if testing is truly not feasible)
 4. If user selects "Modify testing scope":
    - Wait for user to describe their modifications
    - Incorporate feedback into test plan
 5. Write tests following the confirmed plan and project conventions:
-   - Bug reproduction test (verifies fix resolves the original issue)
-   - Edge cases exposed by the bug
-   - Regression prevention tests
+   - **Bug reproduction test (REQUIRED)**: A test that exercises the exact scenario that caused the bug. This test would fail on the pre-fix code and passes with the fix.
+   - Edge case tests: Cover related edge cases exposed by the bug
+   - Regression prevention tests: Broader tests to guard against similar issues
 6. **Execute tests using `bug-test-runner` agent**:
    - Pass the test files/patterns from the approved test plan
    - Agent runs tests and returns structured results
@@ -236,12 +242,13 @@ Initial request: $ARGUMENTS
 - Test-runner agent provides structured, parseable test results
 
 **Test Quality Standards**:
-- Test names clearly describe what is being tested
+- **Bug reproduction test is mandatory** - at minimum, include one test that would have caught this specific bug
+- Test names clearly describe what is being tested (e.g., `test_handles_null_input_that_caused_crash`)
 - Each test focuses on a single behavior
 - Tests are independent (no shared state)
 - Follow existing project test patterns exactly
 
-**Output**: User-approved test suite with passing tests
+**Output**: User-approved test suite with passing tests, including at least one bug reproduction test
 
 ---
 
