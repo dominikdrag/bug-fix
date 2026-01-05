@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-01-04
+
+### Changed
+- Bug reproduction tests are now **mandatory** in Phase 6 (Testing)
+  - Every bug fix must include at least one unit test that would have caught the bug
+  - Tests must fail before the fix and pass after (proving the fix works)
+  - Updated `bug-test-analyzer` agent to prioritize bug reproduction tests
+
 ## [1.1.1] - 2026-01-02
 
 ### Added

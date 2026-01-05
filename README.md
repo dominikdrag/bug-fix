@@ -267,23 +267,25 @@ Which approach would you like to use?
 
 **Goal**: Ensure the fix is properly tested with user-approved strategy
 
+**Critical Requirement**: Every bug fix **must** include at least one unit test that would have caught the bug. This test should fail before the fix and pass after.
+
 **What happens:**
 
 1. **Test Analysis**: Launches `bug-test-analyzer` agent to:
-   - Identify what should be tested to prevent regression
-   - Propose test cases covering the bug scenario
+   - Identify the exact conditions that trigger the bug
+   - Propose test cases that specifically reproduce the bug scenario
    - Identify edge cases related to the bug
    - Note mocking requirements and special setup
 
 2. **User Approval**: Presents test plan and asks for explicit confirmation:
    - "Proceed with proposed testing strategy"
    - "Modify testing scope" (describe changes)
-   - "Skip testing phase"
+   - "Skip testing phase" (only if testing is truly not feasible)
 
 3. **Test Writing**: If approved, writes tests directly:
-   - Bug reproduction test (verifies fix resolves the issue)
-   - Edge cases exposed by the bug
-   - Regression prevention tests
+   - **Bug reproduction test (REQUIRED)**: Exercises the exact scenario that caused the bug
+   - Edge case tests: Cover related edge cases exposed by the bug
+   - Regression prevention tests: Guard against similar issues
 
 4. **Test Execution**: Launches `bug-test-runner` to run tests and report results
 
@@ -635,4 +637,4 @@ Dominik Drag
 
 ## Version
 
-1.0.1
+1.1.2
