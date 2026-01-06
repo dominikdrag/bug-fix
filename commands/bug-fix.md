@@ -11,11 +11,11 @@ You are helping a developer find and fix a bug or defect in their code. Follow a
 
 ## Workflow State Management
 
-This workflow uses a state file (`.claude/bug-fix-state.json`) to persist progress across conversation compaction and session interruptions.
+This workflow uses a state file (`claude-tmp/bug-fix-state.json`) to persist progress across conversation compaction and session interruptions.
 
 ### On Workflow Start
 
-**FIRST**, check if `.claude/bug-fix-state.json` exists:
+**FIRST**, check if `claude-tmp/bug-fix-state.json` exists:
 - **If file exists and `active: true`**: This is a RESUMED workflow
   - Read the state file to understand current progress
   - Inform the user: "Resuming bug-fix workflow from Phase {currentPhase}"
@@ -326,6 +326,6 @@ If user chooses re-review, return to Step 1 with a focused scope.
    - **Verification**: How to verify the fix works
    - **Prevention**: Suggestions to prevent similar bugs
    - **Follow-up**: Any remaining concerns or recommended next steps
-3. **Delete the state file** (`.claude/bug-fix-state.json`) to mark workflow as complete
+3. **Delete the state file** (`claude-tmp/bug-fix-state.json`) to mark workflow as complete
 
 ---

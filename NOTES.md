@@ -2,7 +2,7 @@
 
 ## Workflow State Persistence (Compaction Recovery)
 
-The workflow uses a state file (`.claude/bug-fix-state.json`) to persist progress across:
+The workflow uses a state file (`claude-tmp/bug-fix-state.json`) to persist progress across:
 - Conversation compaction (automatic summarization when context gets long)
 - Session interruptions
 
@@ -19,7 +19,7 @@ A PreToolUse hook automatically approves Write/Edit/Bash operations on the state
 
 **Hook Configuration** (hooks/hooks.json):
 - Matcher: `Write|Edit|Bash` (positioned first in PreToolUse array)
-- Checks if operation targets `.claude/bug-fix-state.json`
+- Checks if operation targets `claude-tmp/bug-fix-state.json`
 - Auto-approves matching operations
 - Allows non-matching operations to pass through to subsequent hooks
 
