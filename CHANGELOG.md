@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-01-08
+
+### Removed
+- PreToolUse auto-approval hook for state file operations
+  - Simplified hook configuration
+  - State file operations now follow standard permission flow
+
+## [1.2.0] - 2026-01-07
+
+### Changed
+- Workflow expanded from 8 phases to 9 phases
+- Various workflow improvements
+
 ## [1.1.4] - 2026-01-06
 
 ### Changed
