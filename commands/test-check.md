@@ -1,6 +1,7 @@
 ---
 description: Run tests related to recent code changes and analyze results
-argument-hint: Optional file paths or patterns to test
+allowed-tools: Read, Glob, Grep, LS, Bash, Agent, TodoWrite
+argument-hint: [file-path...]
 ---
 
 # Test Check

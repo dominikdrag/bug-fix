@@ -1,6 +1,7 @@
 ---
 description: Guided bug investigation and fixing workflow with codebase exploration and root cause analysis
-argument-hint: Optional bug description or symptoms
+allowed-tools: Read, Write, Edit, Glob, Grep, LS, Bash, Agent, TodoWrite, AskUser
+argument-hint: [--explorers=N] [--investigators=N] [--hypothesis=N] [--reviewers=N] <bug-description>
 ---
 
 # Bug Fix Workflow
@@ -65,6 +66,29 @@ At the END of each phase, update the state file:
 
 ---
 
+## Configuration
+
+### Parse Arguments
+
+Arguments: $ARGUMENTS
+
+Parse optional flags to configure agent counts:
+- `--explorers=N` - Number of `bug-explorer` agents (default: 3)
+- `--investigators=N` - Number of `bug-investigator` agents (default: 3)
+- `--hypothesis=N` - Number of `bug-hypothesis` agents (default: 3)
+- `--reviewers=N` - Number of `bug-fix-reviewer` agents (default: 3)
+
+Valid range: 1-10 for explorers, 1-5 for all others. If a value is out of range, use the closest value in range.
+
+Remaining text after flags is the bug description.
+
+### Display Configuration
+
+At the start, confirm the configuration:
+> Using agent counts: {explorers} explorers, {investigators} investigators, {hypothesis} hypothesis, {reviewers} reviewers
+
+---
+
 ## Phase 1: Discovery
 
 **Goal**: Understand the bug or defect thoroughly
@@ -91,7 +115,7 @@ Initial request: $ARGUMENTS
 **Goal**: Understand the code paths related to the bug
 
 **Actions**:
-1. Launch 2-3 bug-explorer agents in parallel. Each agent should:
+1. Launch {explorers} bug-explorer agent(s) in parallel. Each agent should:
    - Trace through the code comprehensively from trigger point to symptom
    - Target a different aspect (e.g., entry points and flow, error handling paths, related features)
    - Include a list of 5-10 key files to read
@@ -118,9 +142,9 @@ Initial request: $ARGUMENTS
 **CRITICAL**: This is where deep analysis happens. DO NOT SKIP.
 
 **Actions**:
-1. Launch all investigation agents **in parallel** (3 bug-investigator + 1 bug-historian):
+1. Launch all investigation agents **in parallel** ({investigators} bug-investigator + 1 bug-historian):
 
-   **Bug Investigator Agents (3x)** - analyze the code for issues:
+   **Bug Investigator Agents ({investigators}x)** - analyze the code for issues:
    - Common bug patterns (null handling, race conditions, logic errors)
    - State management and data flow issues
    - Error handling gaps and edge cases
@@ -153,7 +177,7 @@ Initial request: $ARGUMENTS
 **Goal**: Form specific hypotheses about root cause and propose fix approaches
 
 **Actions**:
-1. Launch 3 bug-hypothesis agents in parallel with different focuses:
+1. Launch {hypothesis} bug-hypothesis agent(s) in parallel with different focuses:
    - Most likely hypothesis based on evidence
    - Alternative hypothesis considering edge cases
    - Comprehensive analysis considering systemic issues
@@ -390,7 +414,7 @@ If either gate is missing, STOP and complete the required phase first.
 **Actions**:
 
 ### Step 1: Launch Review Agents
-1. Launch 3 `bug-fix-reviewer` agents in parallel with different focuses:
+1. Launch {reviewers} `bug-fix-reviewer` agent(s) in parallel with different focuses:
    - Agent 1: Fix correctness (does it actually address root cause?)
    - Agent 2: Regression risk (could it break existing functionality?)
    - Agent 3: Edge cases and side effects

@@ -1,6 +1,7 @@
 ---
 description: Investigate git history to find when and why code was written or changed
-argument-hint: File path(s) or code area to investigate
+allowed-tools: Read, Glob, Grep, LS, Bash, Agent
+argument-hint: <file-path>...
 ---
 
 # Git History Investigation

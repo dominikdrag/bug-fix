@@ -2,7 +2,7 @@
 name: bug-test-runner
 description: Discovers and runs tests related to bug fixes, analyzes results, identifies gaps in test coverage, and suggests new tests to prevent regression
 tools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput
-model: sonnet
+model: haiku
 color: yellow
 ---
 
