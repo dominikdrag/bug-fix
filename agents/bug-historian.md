@@ -2,7 +2,7 @@
 name: bug-historian
 description: Uses git history to find when and why bugs were introduced, identifying the commit that caused the issue and understanding the original developer's intent
 tools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, Bash, KillShell, BashOutput
-model: opus
+model: sonnet
 color: purple
 ---
 

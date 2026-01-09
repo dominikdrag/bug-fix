@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-01-09
+
+### Added
+- Phase 5: Planning - comprehensive fix plan creation before implementation
+  - Consolidates information from Phases 1-4
+  - Defines fix tasks (`FIX-NNN`), testing tasks (`TEST-NNN`), and review tasks (`REVIEW-NNN`)
+  - Creates `claude-tmp/bug-fix-plan.md` with structured task breakdown
+  - User approval gate via `AskUserQuestion` before implementation
+  - Plan file tracks task completion across phases
+
+### Changed
+- Phase 6 (Implementation) now follows approved plan with `FIX-NNN` task tracking
+- Phase 7 (Testing) now tracks `TEST-NNN` tasks in plan file
+- Phase 8 (Review) now tracks `REVIEW-NNN` tasks in plan file
+- PreCompact hook updated for 9-phase workflow and plan file management
+- State file schema updated to include `planApproved` decision and `currentTask` tracking
+- `bug-historian` agent: Changed model from opus to sonnet for faster execution
+- `bug-test-runner` agent: Removed direct `Bash` tool access (now uses `BashOutput` only)
+
 ## [1.2.1] - 2026-01-08
 
 ### Removed

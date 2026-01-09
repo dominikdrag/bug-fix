@@ -6,8 +6,8 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Check if a /bug-fix workflow is active. If YES: 1) Identify the current phase (1-8) based on conversation progress. 2) List completed phases. 3) Note key decisions (selected fix approach, test strategy). 4) Write this state to claude-tmp/bug-fix-state.json using Write tool with format: {\"active\": true, \"currentPhase\": N, \"completedPhases\": [...], \"decisions\": {...}, \"summary\": \"brief context\"}. Return: {\"decision\": \"allow\"}. If NO active workflow, return: {\"decision\": \"allow\"}.",
-            "timeout": 60
+            "prompt": "Check if a /bug-fix workflow is active. If YES: 1) Identify the current phase (1-9) based on conversation progress. 2) List completed phases. 3) Note key decisions (selected fix approach, plan approval, test strategy). 4) Identify the current task being worked on (e.g., FIX-001). 5) Write this state to claude-tmp/bug-fix-state.json using Write tool with format: {\"active\": true, \"currentPhase\": N, \"completedPhases\": [...], \"currentTask\": \"FIX-NNN\" or null, \"decisions\": {...}, \"summary\": \"brief context\"}. 6) If claude-tmp/bug-fix-plan.md exists, update it: a) Update the Status block's Current Task field, b) Add a progress log entry with timestamp and current state, c) Mark any completed tasks with [x] if not already marked. Return: {\"decision\": \"allow\"}. If NO active workflow, return: {\"decision\": \"allow\"}.",
+            "timeout": 90
           }
         ]
       }

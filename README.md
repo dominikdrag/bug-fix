@@ -4,7 +4,7 @@ A comprehensive, structured workflow for finding and fixing bugs with specialize
 
 ## Overview
 
-The Bug Fix Plugin provides a systematic 8-phase approach to debugging. Instead of jumping straight into code changes, it guides you through understanding the bug, exploring the codebase, investigating potential causes, forming hypotheses, implementing and testing fixes, and validating quality - resulting in more accurate root cause identification and robust fixes.
+The Bug Fix Plugin provides a systematic 9-phase approach to debugging. Instead of jumping straight into code changes, it guides you through understanding the bug, exploring the codebase, investigating potential causes, forming hypotheses, creating a fix plan, implementing and testing fixes, and validating quality - resulting in more accurate root cause identification and robust fixes.
 
 ## Installation
 
@@ -28,7 +28,7 @@ This plugin embeds these practices into a structured workflow that runs automati
 
 ## Command: `/bug-fix`
 
-Launches a guided bug investigation and fixing workflow with 7 distinct phases.
+Launches a guided bug investigation and fixing workflow with 9 distinct phases.
 
 **Usage:**
 ```bash
@@ -100,7 +100,7 @@ Investigate git history to understand when and why code was written.
 - To identify who to consult about specific code
 - Before making changes to understand the history
 
-## The 8-Phase Workflow
+## The 9-Phase Workflow
 
 ### Phase 1: Discovery
 
@@ -246,24 +246,76 @@ over-engineering. Quick fix would need revisiting.
 Which approach would you like to use?
 ```
 
-### Phase 5: Implementation
+### Phase 5: Planning
 
-**Goal**: Implement the chosen fix
+**Goal**: Create a comprehensive fix plan before implementation
 
 **What happens:**
-- **Waits for explicit approval** before starting
-- Reads all relevant files identified in previous phases
-- Implements fix following codebase conventions
+- Consolidates all information from Phases 1-4
+- Breaks down the chosen fix into discrete tasks:
+  - `FIX-NNN`: Implementation tasks (files to modify)
+  - `TEST-NNN`: Testing tasks (tests to write)
+  - `REVIEW-NNN`: Quality review tasks
+- Defines acceptance criteria (`AC-NNN`) for the fix
+- Creates `claude-tmp/bug-fix-plan.md` with structured task breakdown
+- **Presents full plan and asks for approval**
+- Updates plan based on feedback if requested
+
+**Example output:**
+```
+Bug Fix Plan
+
+Bug Summary:
+Race condition in saveService.ts causing intermittent crashes
+
+Selected Fix Approach: Proper Fix
+Implement optimistic locking with version checking
+
+Fix Tasks:
+- [ ] FIX-001: Add version field to document state
+  - Files: src/types/document.ts
+  - Depends on: none
+- [ ] FIX-002: Implement version check before save
+  - Files: src/services/saveService.ts:45
+  - Depends on: FIX-001
+- [ ] FIX-003: Add retry logic for version conflicts
+  - Files: src/services/saveService.ts:60
+  - Depends on: FIX-002
+
+Testing Tasks:
+- [ ] TEST-001: Bug reproduction test (concurrent saves)
+- [ ] TEST-002: Version conflict retry test
+
+Acceptance Criteria:
+- [ ] AC-001: Bug no longer reproduces under original conditions
+- [ ] AC-002: Concurrent saves complete without data loss
+
+Do you want to proceed with this plan?
+```
+
+### Phase 6: Implementation
+
+**Goal**: Implement the chosen fix following the approved plan
+
+**What happens:**
+- **Verifies both fix approach (Phase 4) and plan (Phase 5) are approved**
+- Reads the plan file (`claude-tmp/bug-fix-plan.md`) to get task list
+- For each `FIX-NNN` task:
+  - Reads relevant files identified in previous phases
+  - Implements fix following codebase conventions
+  - Marks task complete in plan file
+  - Adds progress log entry
 - Makes minimal changes (no unrelated refactoring)
 - Updates todos as progress is made
 
 **Notes:**
-- Implementation only starts after you approve
+- Implementation only starts after plan approval
 - Follows patterns discovered in Phase 2
 - Uses fix approach chosen in Phase 4
+- Plan file tracks task completion
 - Explains changes made after completion
 
-### Phase 6: Testing
+### Phase 7: Testing
 
 **Goal**: Ensure the fix is properly tested with user-approved strategy
 
@@ -321,7 +373,7 @@ Related Scenarios (Medium Priority):
 Do you want to proceed with this testing strategy?
 ```
 
-### Phase 7: Quality Review
+### Phase 8: Quality Review
 
 **Goal**: Ensure fix quality and correctness through user-reviewed findings
 
@@ -367,16 +419,18 @@ Important Issues (2):
 Which issues would you like to fix?
 ```
 
-### Phase 8: Summary
+### Phase 9: Summary
 
 **Goal**: Document what was found and fixed
 
 **What happens:**
 - Marks all todos complete
+- Deletes workflow files (`claude-tmp/bug-fix-state.json`, `claude-tmp/bug-fix-plan.md`)
 - Summarizes:
   - Root cause identified
   - Fix applied with rationale
   - Files modified
+  - Tasks completed (FIX-NNN, TEST-NNN, REVIEW-NNN)
   - Verification steps
   - Prevention suggestions
   - Recommended next steps
@@ -442,7 +496,7 @@ Prevention:
 - Can be invoked manually via `/git-history` command
 - Can be invoked manually to investigate code history
 
-**Model**: Opus (deep analysis of intent and history)
+**Model**: Sonnet (fast git history analysis)
 
 ### `bug-investigator`
 
@@ -489,7 +543,7 @@ Prevention:
 - Test prioritization
 
 **When triggered:**
-- Automatically in Phase 6 (Testing)
+- Automatically in Phase 7 (Testing)
 - Can be invoked manually when planning tests for bug fixes
 
 **Model**: Opus (advanced reasoning for test planning)
@@ -505,7 +559,7 @@ Prevention:
 - Convention compliance
 
 **When triggered:**
-- Automatically in Phase 7 (Quality Review)
+- Automatically in Phase 8 (Quality Review)
 - Can be invoked manually after writing fixes
 
 **Model**: Opus (thorough validation)
@@ -522,7 +576,7 @@ Prevention:
 - New test suggestions
 
 **When triggered:**
-- Automatically in Phase 6 (Testing)
+- Automatically in Phase 7 (Testing)
 - Can be invoked manually to run tests for any code changes
 - Can be invoked manually via `/test-check` command
 
@@ -535,7 +589,7 @@ Prevention:
 /bug-fix The API sometimes returns stale data after updates
 ```
 
-Let the workflow guide you through all 7 phases.
+Let the workflow guide you through all 9 phases.
 
 ### Manual agent invocation:
 
@@ -575,7 +629,7 @@ Let the workflow guide you through all 7 phases.
 2. **Answer questions thoroughly**: Phase 1 sets the foundation for everything else
 3. **Read the exploration findings**: Phase 2 reveals important context
 4. **Choose fix approach deliberately**: Consider urgency vs long-term maintainability
-5. **Don't skip testing and review**: Phases 6-7 catch issues before they reach production
+5. **Don't skip testing and review**: Phases 7-8 catch issues before they reach production
 
 ## When to Use This Plugin
 
@@ -637,4 +691,4 @@ Dominik Drag
 
 ## Version
 
-1.2.1
+1.2.2
