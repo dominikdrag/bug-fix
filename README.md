@@ -40,6 +40,21 @@ Or simply:
 /bug-fix
 ```
 
+**Configure agent counts:**
+```bash
+# Use fewer agents for simpler bugs
+/bug-fix --explorers=2 --investigators=2 The login button fails
+
+# Use more agents for complex investigations
+/bug-fix --explorers=5 --hypothesis=4 Intermittent data corruption
+```
+
+**Flags:**
+- `--explorers=N` - Number of bug-explorer agents (default: 3, range: 1-10)
+- `--investigators=N` - Number of bug-investigator agents (default: 3, range: 1-5)
+- `--hypothesis=N` - Number of bug-hypothesis agents (default: 3, range: 1-5)
+- `--reviewers=N` - Number of bug-fix-reviewer agents (default: 3, range: 1-5)
+
 The command will guide you through the entire process interactively.
 
 ## Command: `/test-check`
@@ -691,4 +706,4 @@ Dominik Drag
 
 ## Version
 
-1.2.2
+1.2.3

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-01-09
+
+### Added
+- Configurable agent counts via command-line flags:
+  - `--explorers=N` - Number of bug-explorer agents (default: 3, range: 1-10)
+  - `--investigators=N` - Number of bug-investigator agents (default: 3, range: 1-5)
+  - `--hypothesis=N` - Number of bug-hypothesis agents (default: 3, range: 1-5)
+  - `--reviewers=N` - Number of bug-fix-reviewer agents (default: 3, range: 1-5)
+- `allowed-tools` frontmatter to all commands for explicit tool restrictions
+
+### Changed
+- `bug-test-runner` agent: Changed model from sonnet to haiku for faster test execution
+
 ## [1.2.2] - 2026-01-09
 
 ### Added
