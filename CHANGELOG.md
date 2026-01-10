@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `/bug-fix-tdd` command for TDD-style bug fixing workflow
+  - 10-phase workflow with Red-Green-Refactor approach
+  - **Phase 6 (Test Design)**: Design reproduction tests before writing
+  - **Phase 7 (Red Phase)**: Write tests, verify they FAIL (proves bug exists)
+  - **Phase 8 (Green Phase)**: Implement fix, verify tests PASS (proves fix works)
+  - Automatic stop-and-ask when tests unexpectedly pass (bug can't be reproduced)
+  - Separate state file (`claude-tmp/bug-fix-tdd-state.json`) and plan file (`claude-tmp/bug-fix-tdd-plan.md`)
+  - Same configurable agent counts as `/bug-fix` (`--explorers`, `--investigators`, `--hypothesis`, `--reviewers`)
+
 ## [1.2.3] - 2026-01-09
 
 ### Added

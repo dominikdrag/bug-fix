@@ -86,6 +86,57 @@ Quickly run tests related to your code changes without the full bug-fix workflow
 - Before committing to verify nothing broke
 - When you want quick test feedback without full investigation
 
+## Command: `/bug-fix-tdd`
+
+TDD-style bug fixing workflow - write failing tests first, then implement fix.
+
+**Usage:**
+```bash
+/bug-fix-tdd The login button sometimes shows an error after clicking
+```
+
+Or simply:
+```bash
+/bug-fix-tdd
+```
+
+**Configure agent counts (same as /bug-fix):**
+```bash
+/bug-fix-tdd --explorers=2 --investigators=2 The login button fails
+```
+
+**What makes it different from `/bug-fix`:**
+
+| Aspect | `/bug-fix` | `/bug-fix-tdd` |
+|--------|-----------|----------------|
+| Test timing | Tests written AFTER fix | Tests written BEFORE fix |
+| Verification | Tests should pass | Tests must FAIL first, then PASS after fix |
+| TDD phases | No | Red (fail) → Green (pass) → Refactor |
+| Proof of bug | Implicit | Explicit (failing test proves it) |
+
+**The TDD Approach:**
+1. **Red Phase**: Write tests that reproduce the bug, verify they FAIL
+2. **Green Phase**: Implement the fix, verify tests now PASS
+3. **Refactor**: Clean up in Quality Review phase
+
+**When to use:**
+- When you want proof the bug exists (failing test)
+- When you want confidence the fix works (test passes after)
+- When following TDD practices
+- When the bug is well-understood and reproducible
+
+**10-Phase Workflow:**
+1. Discovery - Gather bug symptoms
+2. Codebase Exploration - Trace code paths
+3. Investigation & History - Analyze code and git history
+4. Hypothesis Formation - Form root cause hypothesis
+5. Planning - Create fix plan with TEST/FIX/REVIEW tasks
+6. Test Design - Design reproduction tests
+7. Red Phase - Write tests, verify they FAIL
+8. Green Phase - Implement fix, verify tests PASS
+9. Quality Review - Review fix quality
+10. Summary - Document results
+
 ## Command: `/git-history`
 
 Investigate git history to understand when and why code was written.
