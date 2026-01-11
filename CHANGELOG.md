@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-01-11
+
 ### Added
 - `/bug-fix-tdd` command for TDD-style bug fixing workflow
   - 10-phase workflow with Red-Green-Refactor approach

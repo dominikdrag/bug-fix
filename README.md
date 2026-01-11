@@ -757,4 +757,4 @@ Dominik Drag
 
 ## Version
 
-1.2.3
+1.3.0
