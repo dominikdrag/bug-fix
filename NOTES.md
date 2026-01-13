@@ -27,25 +27,99 @@ A PreToolUse hook automatically approves Write/Edit/Bash operations on the state
 
 ### State File Schema
 
+The state file includes full historical context via `phaseHistory`:
+
 ```json
 {
   "active": true,
-  "currentPhase": 1,
-  "completedPhases": [1, 2],
+  "workflowType": "bug-fix",
   "bugDescription": "Login fails with 500 error when password contains special characters",
+  "startedAt": "2026-01-13T10:30:00Z",
+  "lastUpdatedAt": "2026-01-13T11:45:00Z",
+  "currentPhase": 4,
+  "currentTask": null,
+  "phaseHistory": [
+    {
+      "phase": 1,
+      "name": "Discovery",
+      "status": "completed",
+      "startedAt": "2026-01-13T10:30:00Z",
+      "completedAt": "2026-01-13T10:35:00Z",
+      "outputs": {
+        "symptoms": ["500 error on login", "only with special chars"],
+        "reproductionSteps": ["Enter password with @#$", "Submit form"],
+        "expectedBehavior": "Login succeeds",
+        "affectedArea": "Authentication module"
+      }
+    },
+    {
+      "phase": 2,
+      "name": "Exploration",
+      "status": "completed",
+      "startedAt": "2026-01-13T10:35:00Z",
+      "completedAt": "2026-01-13T10:50:00Z",
+      "outputs": {
+        "agentCount": 3,
+        "keyFiles": ["src/auth/login.ts", "src/utils/sanitize.ts"],
+        "executionPaths": ["POST /login → validateInput → hashPassword"],
+        "areasOfConcern": ["Input sanitization in validateInput"]
+      }
+    },
+    {
+      "phase": 3,
+      "name": "Investigation",
+      "status": "completed",
+      "startedAt": "2026-01-13T10:50:00Z",
+      "completedAt": "2026-01-13T11:05:00Z",
+      "outputs": {
+        "agentCount": 4,
+        "findings": [
+          {"issue": "Unescaped regex in sanitizer", "confidence": 95, "file": "src/utils/sanitize.ts:42"}
+        ],
+        "historicalContext": "Introduced in commit abc123 during v2.0 migration"
+      }
+    },
+    {
+      "phase": 4,
+      "name": "Hypothesis",
+      "status": "in_progress",
+      "startedAt": "2026-01-13T11:05:00Z",
+      "completedAt": null,
+      "outputs": {}
+    }
+  ],
   "decisions": {
-    "fixApproach": "Comprehensive Fix: Add input sanitization + validation tests",
-    "testStrategy": "Add tests for edge cases"
+    "fixApproach": null,
+    "planApproved": null,
+    "testStrategy": null
   },
-  "summary": "Completed investigation and hypothesis formation. Ready to implement fix."
+  "summary": "Investigating hypothesis for regex escaping issue in sanitizer."
 }
 ```
+
+### Phase-Specific Outputs
+
+| Phase | Outputs |
+|-------|---------|
+| 1 Discovery | `symptoms[]`, `reproductionSteps[]`, `expectedBehavior`, `affectedArea` |
+| 2 Exploration | `agentCount`, `keyFiles[]`, `executionPaths[]`, `areasOfConcern[]` |
+| 3 Investigation | `agentCount`, `findings[]`, `historicalContext` |
+| 4 Hypothesis | `agentCount`, `hypotheses[]`, `selectedApproach`, `selectionRationale` |
+| 5 Planning | `fixTaskCount`, `reviewTaskCount`, `planFile` |
+| 6 Implementation | `tasksCompleted[]`, `tasksRemaining[]`, `filesModified[]` |
+| 7 Testing | `testsWritten[]`, `testsPassing` |
+| 8 Review | `issuesFound`, `issuesFixed[]`, `issuesSkipped[]` |
+| 9 Summary | `filesModified[]`, `rootCause`, `prevention[]` |
 
 ### Recovery Behavior
 
 When resuming:
 1. User informed which phase is being resumed
-2. Completed phases and key decisions are displayed
+2. Historical context from `phaseHistory` is displayed:
+   - Key files and execution paths from exploration
+   - Investigation findings with confidence scores
+   - Historical context (culprit commit, original intent)
+   - Selected hypothesis and fix approach
 3. Workflow continues from current phase (no restart)
 
 ## Testing Phase (Phase 6)

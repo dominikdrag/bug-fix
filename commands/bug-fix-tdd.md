@@ -24,11 +24,34 @@ This workflow uses a state file (`claude-tmp/bug-fix-tdd-state.json`) to persist
 **FIRST**, check if `claude-tmp/bug-fix-tdd-state.json` exists:
 - **If file exists and `active: true`**: This is a RESUMED workflow
   - Read the state file to understand current progress
+  - **If `claude-tmp/bug-fix-tdd-plan.md` exists**: Read the plan file
+  - **If plan exists**: Parse it to determine current task progress
+    - Count remaining unchecked tasks (lines matching `- [ ]`)
+    - Display: "Current task: {currentTask.id} ({currentTask.substep}), {N} tasks remaining"
   - Inform the user: "Resuming TDD bug-fix workflow from Phase {currentPhase}"
-  - Display completed phases and key decisions from the state
+  - Display historical context from `phaseHistory`:
+    - For each completed phase, show phase name and key outputs
+    - Phase 2: Show key files and execution paths discovered
+    - Phase 3: Show investigation findings and historical context
+    - Phase 4: Show selected hypothesis and approach
+    - Phase 6: Show test design and approved test cases
   - Continue from the current phase (do NOT restart from Phase 1)
 - **If file does not exist**: This is a NEW workflow
-  - Create initial state file with `active: true, currentPhase: 1, completedPhases: []`
+  - Create initial state file:
+    ```json
+    {
+      "active": true,
+      "workflowType": "bug-fix-tdd",
+      "bugDescription": "[from user input]",
+      "startedAt": "[current ISO timestamp]",
+      "lastUpdatedAt": "[current ISO timestamp]",
+      "currentPhase": 1,
+      "currentTask": null,
+      "phaseHistory": [],
+      "decisions": {"fixApproach": null, "planApproved": null, "testDesignApproved": null, "testsVerifiedFailing": null},
+      "summary": "Starting TDD bug-fix workflow"
+    }
+    ```
   - Proceed with Phase 1
 
 ### State File Format
@@ -36,10 +59,31 @@ This workflow uses a state file (`claude-tmp/bug-fix-tdd-state.json`) to persist
 ```json
 {
   "active": true,
-  "currentPhase": 1,
-  "completedPhases": [],
+  "workflowType": "bug-fix-tdd",
   "bugDescription": "...",
-  "currentTask": null,
+  "startedAt": "ISO timestamp",
+  "lastUpdatedAt": "ISO timestamp",
+  "currentPhase": 1,
+  "currentTask": {
+    "id": "TEST-001",
+    "substep": "red|green|refactor",
+    "attempts": 0,
+    "errors": []
+  },
+  "phaseHistory": [
+    {
+      "phase": 1,
+      "name": "Discovery",
+      "status": "completed",
+      "startedAt": "ISO timestamp",
+      "completedAt": "ISO timestamp",
+      "outputs": {
+        "symptoms": ["symptom 1", "symptom 2"],
+        "reproductionSteps": ["step 1", "step 2"],
+        "expectedBehavior": "..."
+      }
+    }
+  ],
   "decisions": {
     "fixApproach": null,
     "planApproved": null,
@@ -50,15 +94,34 @@ This workflow uses a state file (`claude-tmp/bug-fix-tdd-state.json`) to persist
 }
 ```
 
+### Phase-Specific Outputs
+
+Each phase stores structured outputs in `phaseHistory[].outputs`:
+
+| Phase | Name | Outputs |
+|-------|------|---------|
+| 1 | Discovery | `symptoms[]`, `reproductionSteps[]`, `expectedBehavior`, `affectedArea` |
+| 2 | Exploration | `agentCount`, `keyFiles[]`, `executionPaths[]`, `areasOfConcern[]` |
+| 3 | Investigation | `agentCount`, `findings[]`, `historicalContext` |
+| 4 | Hypothesis | `agentCount`, `hypotheses[]`, `selectedApproach`, `selectionRationale` |
+| 5 | Planning | `testTaskCount`, `fixTaskCount`, `reviewTaskCount`, `planFile` |
+| 6 | Test Design | `testDesignApproved`, `testCases[]` |
+| 7 | Red Phase | `testsWritten[]`, `testsVerifiedFailing` |
+| 8 | Green Phase | `tasksCompleted[]`, `testsVerifiedPassing`, `filesModified[]` |
+| 9 | Review | `issuesFound`, `issuesFixed[]`, `issuesSkipped[]` |
+| 10 | Summary | `filesModified[]`, `rootCause`, `tddProcess` |
+
 ### Updating State
 
 At the START of each phase, update the state file:
 - Set `currentPhase` to the new phase number
+- Set `lastUpdatedAt` to current ISO timestamp
+- Add new entry to `phaseHistory[]` with `status: "in_progress"`, `startedAt`, and empty `outputs`
 - Update `summary` with relevant context
 
 At the END of each phase, update the state file:
-- Add the phase number to `completedPhases`
-- Store any decisions made
+- Update the phase's `phaseHistory` entry: set `status: "completed"`, `completedAt`, and populate `outputs`
+- Store any decisions made in `decisions`
 
 ---
 
@@ -238,7 +301,10 @@ Initial request: $ARGUMENTS
    - Assign IDs: `AC-NNN`
    - Must include: "Bug no longer reproduces under original conditions"
 
-4. **Write Plan File**: Create `claude-tmp/bug-fix-tdd-plan.md` with this structure:
+4. **Write Plan File**: Create `claude-tmp/bug-fix-tdd-plan.md` with this structure.
+
+   **IMPORTANT**: Include FULL details from phases 1-4, not summaries. The plan file should be a complete reference that enables resumption without needing the state file.
+
    ```markdown
    # TDD Bug Fix Plan
 
@@ -248,20 +314,66 @@ Initial request: $ARGUMENTS
    > **Created**: [ISO timestamp]
    > **Last Updated**: [ISO timestamp]
 
-   ## Bug Summary
-   [Summary from Phase 1]
+   ## Phase 1: Discovery
 
-   ## Root Cause Analysis
-   [Selected hypothesis and supporting evidence from Phase 4]
+   ### Symptoms
+   - [Full list of ALL symptoms identified]
 
-   ## Codebase Context
-   [Key files and execution paths from Phases 2-3]
+   ### Reproduction Steps
+   1. [Step 1 with full detail]
+   2. [Step 2 with full detail]
 
-   ## Historical Context
-   [Relevant git history findings from Phase 3]
+   ### Expected vs Actual Behavior
+   - **Expected**: [complete description]
+   - **Actual**: [complete description]
 
-   ## Selected Fix Approach
-   [Quick/Proper/Comprehensive fix with rationale]
+   ### Affected Area
+   [Full description of affected codebase area]
+
+   ## Phase 2: Codebase Exploration
+
+   ### Key Files
+   - `path/to/file.ts` - [why it's relevant, what it contains]
+   - `path/to/file2.ts` - [why it's relevant, what it contains]
+
+   ### Execution Paths
+   - [Entry point] → [intermediate steps] → [symptom location]
+   - Include file:line references throughout
+
+   ### Areas of Concern
+   - [Area 1]: [full description]
+   - [Area 2]: [full description]
+
+   ### Agent Findings Summary
+   [Full synthesis of what exploration agents discovered - preserve all relevant details]
+
+   ## Phase 3: Investigation & History
+
+   ### Investigation Findings
+   | Finding | Confidence | File:Line | Evidence |
+   |---------|-----------|-----------|----------|
+   | [Finding 1] | 95% | `file.ts:42` | [Full evidence] |
+   | [Finding 2] | 85% | `file.ts:78` | [Full evidence] |
+
+   ### Historical Context
+   - **Culprit Commit**: [hash] - [full description]
+   - **Original Intent**: [complete explanation of why code was written this way]
+   - **Previous Fix Attempts**: [if any, with details]
+
+   ## Phase 4: Hypothesis Formation
+
+   ### Hypotheses Presented
+   1. **[Hypothesis A Name]**: [Full description with supporting evidence]
+   2. **[Hypothesis B Name]**: [Full description with supporting evidence]
+
+   ### Selected Fix Approach
+   **Choice**: [Quick/Proper/Comprehensive Fix]
+
+   **Rationale**: [Complete rationale for why this was chosen]
+
+   **Key Decisions**:
+   - [Decision 1 with full context]
+   - [Decision 2 with full context]
 
    ## Phase Scope Rules (TDD)
    - **Phase 6 (Test Design)**: Analyze and design reproduction tests

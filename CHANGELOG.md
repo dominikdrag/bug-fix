@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-01-13
+
+### Added
+- `phaseHistory` in state files for richer resumption context with structured outputs per phase
+- Expanded plan files with full phase 1-4 details instead of summaries
+- Phase-specific outputs table documenting what each phase stores
+- `workflowType`, `startedAt`, `lastUpdatedAt` fields in state files
+
+### Changed
+- `TEST-NNN` tasks now created dynamically in Phase 7 after test-analyzer runs (not during Phase 5 planning)
+- Resumption now displays historical context from `phaseHistory` including:
+  - Key files and execution paths from exploration
+  - Investigation findings with confidence scores
+  - Historical context (culprit commit, original intent)
+  - Selected hypothesis and fix approach
+- Plan file template restructured to include complete phase details for resumption without state file
+
 ## [1.3.0] - 2026-01-11
 
 ### Added
