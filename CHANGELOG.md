@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-01-17
+
+### Added
+- **Interactive Focus Selection**: Numbered menus replace command-line flags for agent configuration
+  - Phase 2 (Exploration): 6 focus options (Execution Flow, Error Handling, State & Data Flow, etc.)
+  - Phase 3 (Investigation): 8 focus options (Null/Undefined, Logic Errors, Race Conditions, etc.)
+  - Phase 4 (Hypothesis): 8 perspective options (Primary Evidence, Alternative Cause, Systemic Analysis, etc.)
+  - Phase 8/9 (Review): 6 focus options (Fix Correctness, Regression Risk, Edge Cases, etc.)
+- **Iterative Clarification Loop** (Phase 1): Progressive clarification rounds with exit criteria
+  - Confidence checks after each round
+  - Exit when: reproduction steps are actionable, symptom is clear, affected area is bounded
+- **Review Reconciliation** (Phase 8/9): Maps reviewer findings to plan tasks
+  - Shows "Original REVIEW Tasks" vs "Proposed New REVIEW Tasks"
+  - User-controlled task selection and plan updates
+- **Agent Examples**: Added `<example>` blocks with `<commentary>` tags to all agent descriptions
+- **Your Focus** sections: Agents now document their assigned focus in output
+- **What You Do NOT Do** sections: Clear boundaries for each agent's responsibilities
+
+### Changed
+- All agent descriptions now use multi-line YAML format with examples
+- Removed command-line flags (`--explorers=N`, `--investigators=N`, etc.) from both commands
+- Agent tools optimized per role:
+  - Analysis-only agents: `Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch`
+  - Git-based (bug-historian): adds `Bash`
+  - Execution (bug-test-runner): adds `Bash`
+- Focus definitions injected into agent prompts with full context
+- `TEST-NNN` and `REVIEW-NNN` tasks now created dynamically in their respective phases
+- Plan template includes "## Test Tasks" and "## Review Tasks" placeholders
+- Phase-specific outputs table updated with `focusesSelected[]` and `clarificationRounds`
+
+### Removed
+- `KillShell` and `BashOutput` tools from all agents (unused)
+- Command-line configuration flags (replaced by interactive menus)
+
 ## [1.4.0] - 2026-01-13
 
 ### Added

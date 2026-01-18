@@ -1,7 +1,7 @@
 ---
 description: TDD-style bug investigation and fixing workflow - write failing tests first, then implement fix
 allowed-tools: Read, Write, Edit, Glob, Grep, LS, Bash, Agent, TodoWrite, AskUser
-argument-hint: [--explorers=N] [--investigators=N] [--hypothesis=N] [--reviewers=N] <bug-description>
+argument-hint: <bug-description>
 ---
 
 # TDD Bug Fix Workflow
@@ -100,15 +100,15 @@ Each phase stores structured outputs in `phaseHistory[].outputs`:
 
 | Phase | Name | Outputs |
 |-------|------|---------|
-| 1 | Discovery | `symptoms[]`, `reproductionSteps[]`, `expectedBehavior`, `affectedArea` |
-| 2 | Exploration | `agentCount`, `keyFiles[]`, `executionPaths[]`, `areasOfConcern[]` |
-| 3 | Investigation | `agentCount`, `findings[]`, `historicalContext` |
-| 4 | Hypothesis | `agentCount`, `hypotheses[]`, `selectedApproach`, `selectionRationale` |
+| 1 | Discovery | `symptoms[]`, `reproductionSteps[]`, `expectedBehavior`, `affectedArea`, `clarificationRounds` |
+| 2 | Exploration | `focusesSelected[]`, `agentCount`, `keyFiles[]`, `executionPaths[]`, `areasOfConcern[]` |
+| 3 | Investigation | `focusesSelected[]`, `agentCount`, `findings[]`, `historicalContext` |
+| 4 | Hypothesis | `focusesSelected[]`, `agentCount`, `hypotheses[]`, `selectedApproach`, `selectionRationale` |
 | 5 | Planning | `testTaskCount`, `fixTaskCount`, `reviewTaskCount`, `planFile` |
-| 6 | Test Design | `testDesignApproved`, `testCases[]` |
+| 6 | Test Design | `focusesSelected[]`, `testDesignApproved`, `testCases[]` |
 | 7 | Red Phase | `testsWritten[]`, `testsVerifiedFailing` |
 | 8 | Green Phase | `tasksCompleted[]`, `testsVerifiedPassing`, `filesModified[]` |
-| 9 | Review | `issuesFound`, `issuesFixed[]`, `issuesSkipped[]` |
+| 9 | Review | `focusesSelected[]`, `originalReviewTasks[]`, `newReviewTasks[]`, `issuesFound`, `issuesFixed[]`, `issuesSkipped[]` |
 | 10 | Summary | `filesModified[]`, `rootCause`, `tddProcess` |
 
 ### Updating State
@@ -138,27 +138,11 @@ At the END of each phase, update the state file:
 
 ---
 
-## Configuration
-
-### Parse Arguments
+## Bug Description
 
 Arguments: $ARGUMENTS
 
-Parse optional flags to configure agent counts:
-- `--explorers=N` - Number of `bug-explorer` agents (default: 3)
-- `--investigators=N` - Number of `bug-investigator` agents (default: 3)
-- `--hypothesis=N` - Number of `bug-hypothesis` agents (default: 3)
-- `--reviewers=N` - Number of `bug-fix-reviewer` agents (default: 3)
-
-Valid range: 1-10 for explorers, 1-5 for all others. If a value is out of range, use the closest value in range.
-
-Remaining text after flags is the bug description.
-
-### Display Configuration
-
-At the start, confirm the configuration:
 > **TDD Mode**: Tests will be written FIRST, verified to FAIL, then fix implemented
-> Using agent counts: {explorers} explorers, {investigators} investigators, {hypothesis} hypothesis, {reviewers} reviewers
 
 ---
 
@@ -170,16 +154,43 @@ Initial request: $ARGUMENTS
 
 **Actions**:
 1. Create todo list with all phases (note: this is a 10-phase TDD workflow)
-2. Gather bug information from user:
+2. **Initial Assessment**: Gather bug information from user:
    - What are the symptoms? (error messages, unexpected behavior, crashes)
    - How do you reproduce it? (steps, inputs, conditions)
    - When did it start? (recent change, always existed, intermittent)
    - What is the expected behavior vs actual behavior?
    - What area of the codebase is affected?
    - Any error logs, stack traces, or relevant output?
-3. Summarize understanding and confirm with user
 
-**Critical**: Get clear reproduction steps before proceeding. If the user doesn't have them, help them identify what triggers the bug.
+3. **Clarification Loop** (repeat until confident):
+   a. Present focused questions for the current round (prioritize by impact on diagnosis)
+   b. Wait for user answers
+   c. Analyze answers:
+      - Update understanding of the bug
+      - Note any new ambiguities revealed by answers
+      - Identify follow-up questions triggered by responses
+   d. Re-assess understanding:
+      - Are reproduction steps concrete and repeatable?
+      - Is the symptom clearly defined?
+      - Is the affected area bounded?
+      - Are there remaining high-impact unknowns?
+   e. **Confidence check**: Proceed if:
+      - Reproduction steps are actionable
+      - Symptom is clearly distinguishable from expected behavior
+      - Affected area is sufficiently scoped
+      - No critical information gaps remain
+   f. If not confident, continue loop with follow-up questions
+
+4. **Exit Criteria** - Proceed to Phase 2 when ALL of these are true:
+   - Bug can be reproduced with documented steps
+   - Symptom is clearly defined and observable
+   - Expected vs actual behavior is unambiguous
+   - Affected codebase area is identified
+   - No answers contradict each other
+
+5. Summarize the final understanding before proceeding
+
+**Critical**: Get clear reproduction steps before proceeding. If the user doesn't have them, help them identify what triggers the bug through iterative dialogue. For TDD, clear reproduction steps are especially important because we need to write tests that reproduce the bug BEFORE fixing it.
 
 ---
 
@@ -188,23 +199,66 @@ Initial request: $ARGUMENTS
 **Goal**: Understand the code paths related to the bug
 
 **Actions**:
-1. Launch {explorers} bug-explorer agent(s) in parallel. Each agent should:
-   - Trace through the code comprehensively from trigger point to symptom
-   - Target a different aspect (e.g., entry points and flow, error handling paths, related features)
-   - Include a list of 5-10 key files to read
 
-   **Example agent prompts**:
-   - "Trace the execution path from [trigger] to [symptom], identifying all code involved"
-   - "Map the error handling and edge cases in [affected area]"
-   - "Find similar code patterns and how they handle [situation]"
-   - "Explore the data flow and state management in [component]"
+### Step 1: Present Exploration Focus Options
 
-2. Once the agents return, read all files identified by agents to build deep understanding
-3. Present comprehensive summary of findings:
+Display available exploration focuses for user selection:
+
+```
+## Codebase Exploration
+
+Select which focuses to explore. Each launches a parallel bug-explorer agent.
+
+  Core Focuses (recommended for most bugs)
+   1. Execution Flow       - Trace from trigger to symptom, identify all code involved
+   2. Error Handling       - Map error paths, validation, exception handling
+   3. State & Data Flow    - How data moves, state changes, side effects
+
+  Specialized Focuses (use when relevant)
+   4. Similar Code         - Find similar patterns that work correctly (comparison baseline)
+   5. Dependencies         - External calls, libraries, shared components
+   6. Configuration        - Settings, environment, feature flags that affect behavior
+
+Enter selection (e.g., "1,2,3" or "1-3") [default: 1,2,3]:
+```
+
+Wait for user input before proceeding.
+
+### Step 2: Parse Selection
+
+Accept input formats:
+- Comma-separated: `1,2,3`
+- Ranges: `1-3`
+- Mixed: `1-3,5`
+- Empty/Enter: Use default `1,2,3`
+
+Validate: numbers 1-6 only, deduplicate, sort.
+
+### Step 3: Launch Selected Explorers
+
+Launch one `bug-explorer` agent per selected focus, all in parallel.
+
+**Agent Prompt Format**: Include the focus assignment in each agent's prompt:
+> Your assigned exploration focus is: **[Focus Name]**
+>
+> [Include the FULL focus definition - see bug-fix.md Phase 2 for definitions]
+>
+> Bug context: [bug description and symptoms from Phase 1]
+>
+> Reproduction steps: [from Phase 1]
+>
+> Return a list of 5-10 key files to read.
+
+**WAIT for ALL agent results** - Do NOT proceed until every launched agent has returned.
+
+### Step 4: Synthesize Findings
+
+1. Read all files identified by agents to build deep understanding
+2. Present comprehensive summary of findings:
    - Execution flow with file:line references
    - Key components involved
    - Potential areas of concern identified
-4. **Save the list of key files** for the historian agent in Phase 3
+3. **Save the list of key files** for the historian agent in Phase 3
 
 ---
 
@@ -215,29 +269,69 @@ Initial request: $ARGUMENTS
 **CRITICAL**: This is where deep analysis happens. DO NOT SKIP.
 
 **Actions**:
-1. Launch all investigation agents **in parallel** ({investigators} bug-investigator + 1 bug-historian):
 
-   **Bug Investigator Agents ({investigators}x)** - analyze the code for issues:
-   - Common bug patterns (null handling, race conditions, logic errors)
-   - State management and data flow issues
-   - Error handling gaps and edge cases
+### Step 1: Present Investigation Focus Options
 
-   **Example investigator prompts**:
-   - "Analyze [code area] for null/undefined handling issues, race conditions, and logic errors"
-   - "Examine state management in [component] for potential issues"
-   - "Check error handling completeness in [execution path]"
+Display available investigation focuses for user selection:
 
-   **Bug Historian Agent (1x)** - analyze git history of key files from Phase 2:
-   - Use git blame on the specific files/lines identified as suspicious
-   - Find when the problematic code was introduced
-   - Understand the original intent of the code
-   - Look for previous attempts to fix similar issues
+```
+## Bug Investigation
 
-   **Example historian prompt**:
-   - "Investigate git history of [key files from Phase 2] to find when and why the suspicious code was written, and identify the commit that may have introduced the bug"
+Select which investigation focuses to explore. Each launches a parallel bug-investigator agent.
+Note: Bug historian runs automatically to analyze git history.
 
-2. Consolidate findings from all agents
-3. Present findings with confidence scores:
+  Core Focuses (recommended for most bugs)
+   1. Null/Undefined        - Missing null checks, optional chaining gaps, uninitialized variables
+   2. Logic Errors          - Incorrect conditions, wrong operators, off-by-one errors
+   3. Error Handling Gaps   - Unhandled exceptions, missing catch blocks, error swallowing
+
+  Specialized Focuses (use when relevant)
+   4. Race Conditions       - Async timing, state mutations during async ops, concurrent access
+   5. State Management      - Stale closures, state inconsistency, missing synchronization
+   6. Type & Data Issues    - Type coercion, validation gaps, format mismatches
+   7. Resource Leaks        - Memory leaks, unclosed connections, missing cleanup
+   8. API & Integration     - Incorrect API usage, assumption mismatches, version issues
+
+Enter selection (e.g., "1,2,3" or "1-3") [default: 1,2,3]:
+```
+
+Wait for user input before proceeding.
+
+### Step 2: Parse Selection
+
+Accept input formats:
+- Comma-separated: `1,2,3`
+- Ranges: `1-3`
+- Mixed: `1-3,5`
+- Empty/Enter: Use default `1,2,3`
+
+Validate: numbers 1-8 only, deduplicate, sort.
+
+### Step 3: Launch Investigation Agents
+
+Launch all investigation agents **in parallel**:
+
+**Bug Investigator Agents** - one per selected focus:
+
+**Agent Prompt Format**: Include the focus assignment in each agent's prompt:
+> Your assigned investigation focus is: **[Focus Name]**
+>
+> [Include the FULL focus definition - see bug-fix.md Phase 3 for definitions]
+>
+> Bug context: [from Phase 1]
+> Key files: [from Phase 2]
+>
+> Report only findings with confidence >= 70.
+
+**Bug Historian Agent (1x)** - runs automatically:
+> Investigate git history of [key files from Phase 2] to find when and why the suspicious code was written, and identify the commit that may have introduced the bug
+
+**WAIT for ALL agent results** - Do NOT proceed until every launched agent has returned.
+
+### Step 4: Consolidate Findings
+
+1. Collect all findings from completed agents
+2. Present findings with confidence scores:
    - Potential issues found with file:line references
    - Evidence supporting each finding
    - Prioritized by confidence level
@@ -250,23 +344,68 @@ Initial request: $ARGUMENTS
 **Goal**: Form specific hypotheses about root cause and propose fix approaches
 
 **Actions**:
-1. Launch {hypothesis} bug-hypothesis agent(s) in parallel with different focuses:
-   - Most likely hypothesis based on evidence
-   - Alternative hypothesis considering edge cases
-   - Comprehensive analysis considering systemic issues
 
-   **Each agent should propose a fix approach**:
-   - **Quick Fix**: Minimal change, addresses symptom directly
-   - **Proper Fix**: Addresses root cause with appropriate refactoring
-   - **Comprehensive Fix**: Fixes root cause + adds guards/tests to prevent recurrence
+### Step 1: Present Hypothesis Focus Options
 
-2. Review all hypotheses and form your opinion on which is most likely correct
-3. Present to user:
+Display available hypothesis perspectives for user selection:
+
+```
+## Hypothesis Formation
+
+Select which hypothesis perspectives to explore. Each launches a parallel bug-hypothesis agent.
+
+  Core Perspectives (recommended for most bugs)
+   1. Primary Evidence       - Most likely cause based on strongest evidence
+   2. Alternative Cause      - Second most likely cause, different root
+   3. Systemic Analysis      - Whether this is symptomatic of broader issues
+
+  Specialized Perspectives (use when relevant)
+   4. Edge Case Focus        - Hypothesis centered on boundary conditions
+   5. Timing & Order         - Hypothesis centered on async/timing issues
+   6. Data Integrity         - Hypothesis centered on data corruption or format issues
+   7. Integration Boundary   - Hypothesis centered on external system interactions
+   8. Configuration/Env      - Hypothesis centered on environment-specific causes
+
+Enter selection (e.g., "1,2,3" or "1-3") [default: 1,2,3]:
+```
+
+Wait for user input before proceeding.
+
+### Step 2: Parse Selection
+
+Accept input formats:
+- Comma-separated: `1,2,3`
+- Ranges: `1-3`
+- Mixed: `1-3,5`
+- Empty/Enter: Use default `1,2,3`
+
+Validate: numbers 1-8 only, deduplicate, sort.
+
+### Step 3: Launch Hypothesis Agents
+
+Launch one `bug-hypothesis` agent per selected perspective, all in parallel.
+
+**Agent Prompt Format**: Include the focus assignment in each agent's prompt:
+> Your assigned hypothesis perspective is: **[Perspective Name]**
+>
+> [Include the FULL perspective definition - see bug-fix.md Phase 4 for definitions]
+>
+> Investigation findings: [from Phase 3]
+> Historical context: [from Phase 3]
+>
+> Propose Quick Fix, Proper Fix, and Comprehensive Fix approaches.
+
+**WAIT for ALL agent results** - Do NOT proceed until every launched agent has returned.
+
+### Step 4: Synthesize and Present
+
+1. Review all hypotheses and form your opinion on which is most likely correct
+2. Present to user:
    - Primary hypothesis with supporting evidence
    - Alternative hypotheses if applicable
    - Fix approaches with trade-offs comparison
    - **Your recommendation with reasoning**
-4. **Ask user which approach they prefer**
+3. **Ask user which approach they prefer**
 
 ---
 
@@ -379,7 +518,7 @@ Initial request: $ARGUMENTS
    - **Phase 6 (Test Design)**: Analyze and design reproduction tests
    - **Phase 7 (Red Phase)**: Write `TEST-NNN` tasks, VERIFY TESTS FAIL
    - **Phase 8 (Green Phase)**: Implement `FIX-NNN` tasks, VERIFY TESTS PASS
-   - **Phase 9 (Review)**: Work on `REVIEW-NNN` tasks
+   - **Phase 9 (Review)**: Creates/refines `REVIEW-NNN` tasks from bug-fix-reviewer output, then executes them
 
    ## Testing Tasks (Phase 7 - Red)
    - [ ] **TEST-001**: Bug reproduction test
@@ -395,9 +534,10 @@ Initial request: $ARGUMENTS
      - Files: `path/to/file.ts`
      - Depends on: FIX-001
 
-   ## Quality Tasks (Phase 9)
-   - [ ] **REVIEW-001**: Run code reviewers
-   - [ ] **REVIEW-002**: Apply selected fixes
+   ## Review Tasks
+   > Populated during Phase 9 (Quality Review) based on bug-fix-reviewer agent findings and user selection.
+
+   (none yet)
 
    ## Acceptance Criteria
    - [ ] **AC-001**: Bug no longer reproduces under original conditions
@@ -594,18 +734,62 @@ If gate is missing, STOP and complete Phase 7 first.
 
 **Goal**: Ensure fix quality and correctness through user-reviewed findings
 
-**Scope**: This phase works ONLY on `REVIEW-NNN` quality tasks.
+**Scope**: This phase creates and executes `REVIEW-NNN` quality tasks.
 
 **Actions**:
 
-### Step 1: Launch Review Agents
-1. Launch {reviewers} `bug-fix-reviewer` agent(s) in parallel with different focuses:
-   - Agent 1: Fix correctness (does it actually address root cause?)
-   - Agent 2: Regression risk (could it break existing functionality?)
-   - Agent 3: Edge cases and side effects
-2. **Wait for ALL agents to complete** before proceeding
+### Step 1: Present Review Focus Options
 
-### Step 2: Consolidate Findings
+Display available review focuses for user selection:
+
+```
+## Quality Review
+
+Select which review focuses to explore. Each launches a parallel bug-fix-reviewer agent.
+
+  Core Focuses (recommended for most fixes)
+   1. Fix Correctness        - Does fix address root cause? Could bug still occur?
+   2. Regression Risk        - Could fix break existing functionality?
+   3. Edge Cases             - Are boundary conditions handled? Missing cases?
+
+  Specialized Focuses (use when relevant)
+   4. Side Effect Analysis   - Unintended consequences, shared state impacts
+   5. Convention Compliance  - Project guidelines, code style, patterns
+   6. Completeness           - All affected paths fixed? Cleanup handled?
+
+Enter selection (e.g., "1,2,3" or "1-3") [default: 1,2,3]:
+```
+
+Wait for user input before proceeding.
+
+### Step 2: Parse Selection
+
+Accept input formats:
+- Comma-separated: `1,2,3`
+- Ranges: `1-3`
+- Mixed: `1-3,5`
+- Empty/Enter: Use default `1,2,3`
+
+Validate: numbers 1-6 only, deduplicate, sort.
+
+### Step 3: Launch Review Agents
+
+Launch one `bug-fix-reviewer` agent per selected focus, all in parallel.
+
+**Agent Prompt Format**: Include the focus assignment in each agent's prompt:
+> Your assigned review focus is: **[Focus Name]**
+>
+> [Include the FULL focus definition from bug-fix.md Phase 8]
+>
+> Files modified: [from Phase 6]
+> Tests written: [from Phase 7-8]
+>
+> Report only issues with confidence >= 80.
+
+**WAIT for ALL agent results** - Do NOT proceed until every launched agent has returned.
+
+### Step 4: Consolidate Findings
+
 1. Collect all findings from completed agents
 2. Deduplicate overlapping issues (same file + line + similar description)
 3. Organize by severity:
@@ -613,18 +797,38 @@ If gate is missing, STOP and complete Phase 7 first.
    - **Important Issues** (Confidence 80-89): Should be addressed
    - **Suggestions** (Confidence < 80): Nice to have improvements
 
-### Step 3: Present Findings to User
-Display consolidated findings in a clear format:
+### Step 5: Reconcile with Plan
+
+1. Read `claude-tmp/bug-fix-tdd-plan.md` and extract existing `REVIEW-NNN` tasks (if any from placeholder)
+2. Map high-confidence issues (>=80%) to actionable tasks:
+   - Match issues to existing REVIEW-NNN tasks where applicable
+   - Identify issues that need new REVIEW-NNN tasks
+   - Note any original REVIEW-NNN tasks that are no longer relevant
+3. Prepare reconciliation summary for user presentation
+
+### Step 6: Present Reconciled Findings to User
+
+Display reconciled findings in a clear format:
 
 ```
 ## Review Findings Summary
 
+### Original REVIEW Tasks (from plan)
+- REVIEW-001: [description] - [keep/modify/complete]
+- REVIEW-002: [description] - [keep/modify/complete]
+
+### Proposed New REVIEW Tasks (from reviewer findings)
+- REVIEW-003: [specific issue from findings] - [file:line]
+- REVIEW-004: [specific issue from findings] - [file:line]
+
 ### Critical Issues ({count})
 1. [FILE:LINE] Description - {confidence}%
+   - Maps to: REVIEW-00N (new/existing)
 2. ...
 
 ### Important Issues ({count})
 1. [FILE:LINE] Description - {confidence}%
+   - Maps to: REVIEW-00N (new/existing)
 2. ...
 
 ### Suggestions ({count})
@@ -632,28 +836,38 @@ Display consolidated findings in a clear format:
 2. ...
 ```
 
-### Step 4: User Selection
+### Step 7: User Selection
+
 Use `AskUserQuestion` with `multiSelect: true` to let user choose which issues to address:
 - List each issue as a selectable option
 - Group by severity in the question
 - Include "Skip all - proceed to summary" as an option
 
-### Step 5: Apply Selected Fixes
-1. Apply fixes ONLY for issues the user selected
-2. Track which fixes were applied for the summary
-3. **Mark REVIEW-NNN tasks complete** in plan file
+### Step 8: Update Plan and Apply Selected Fixes
 
-### Step 6: Re-run Tests
+1. Update `claude-tmp/bug-fix-tdd-plan.md`:
+   - Add new REVIEW-NNN tasks based on user selection
+   - Mark skipped original REVIEW-NNN tasks as complete (if user chose to skip)
+   - Each selected issue becomes a trackable task with sequential ID
+2. Add progress log entry: `| [timestamp] | Review tasks refined based on reviewer output |`
+3. Apply fixes ONLY for issues the user selected
+4. For each fix applied:
+   - Mark corresponding REVIEW-NNN task complete in plan file
+   - Track which fixes were applied for the summary
+
+### Step 9: Re-run Tests
+
 After any changes:
 1. Run tests again to ensure nothing broke
-2. All tests must still pass
+2. All tests must still pass (both bug reproduction tests and regression tests)
 
-### Step 7: Offer Re-review
+### Step 10: Offer Re-review
+
 If any fixes were applied, use `AskUserQuestion` to ask:
 - "Run review again to verify fixes?"
 - "Proceed to summary"
 
-If user chooses re-review, return to Step 1 with a focused scope.
+If user chooses re-review, return to Step 3 with a focused scope.
 
 **Output**: Quality-verified fix with user-approved changes and all tests passing
 
