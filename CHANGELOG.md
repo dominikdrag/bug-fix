@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-01-19
+
+### Changed
+- **User input via typing**: All user choices must now be typed (e.g., "1", "2", "1,2,3") instead of using selectable UI options
+  - Added explicit core principle: "Do NOT use selectable UI options - always require typed input"
+  - Updated all phases with choice prompts to show numbered options and wait for typed response
+  - Applies to both `/bug-fix` and `/bug-fix-tdd` commands
+
+### Removed
+- All references to `AskUserQuestion` tool with selectable options
+
 ## [1.5.0] - 2026-01-17
 
 ### Added

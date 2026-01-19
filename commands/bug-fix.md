@@ -115,6 +115,7 @@ At the END of each phase, update the state file:
 
 ## Core Principles
 
+- **User input via typing**: When presenting choices to the user, display numbered options and wait for the user to TYPE their choice (e.g., "1", "2", "1,2,3", "1-3"). Do NOT use selectable UI options - always require typed input.
 - **Gather information first**: Understand the bug symptoms, reproduction steps, and expected behavior before exploring code
 - **Understand before acting**: Read and comprehend existing code patterns and execution paths first
 - **Read files identified by agents**: When launching agents, ask them to return lists of the most important files to read. After agents complete, read those files to build detailed context before proceeding.
@@ -724,19 +725,28 @@ Launch one `bug-hypothesis` agent per selected perspective, all in parallel.
 
 **IMPORTANT**: Present the FULL plan to the user - do NOT summarize or condense. The user needs complete visibility into every task, its dependencies, and acceptance criteria to make an informed approval decision. This is a key decision point requiring maximum user control.
 
-6. **Plan Approval**: Use `AskUserQuestion` with options:
-   - "Proceed with this plan"
-   - "Modify the plan" (user describes changes)
-   - "Add more tasks"
+6. **Plan Approval**: Present options and ask user to type their choice:
 
-7. If user selects "Modify the plan" or "Add more tasks":
+```
+How would you like to proceed with this plan?
+
+1. Proceed with this plan
+2. Modify the plan
+3. Add more tasks
+
+Enter your choice (1, 2, or 3):
+```
+
+Wait for user to type their response.
+
+7. If user selects "2" or "3":
    - Wait for user input
    - Update the plan file accordingly
    - Re-present summary and ask again
 
 8. **Finalize**: Add approval timestamp to progress log
 
-**CRITICAL**: Do NOT proceed to Phase 6 until user explicitly approves the plan via `AskUserQuestion`.
+**CRITICAL**: Do NOT proceed to Phase 6 until user explicitly approves the plan.
 
 **Output**: `claude-tmp/bug-fix-plan.md` file ready to guide implementation
 
@@ -750,7 +760,7 @@ Launch one `bug-hypothesis` agent per selected perspective, all in parallel.
 
 **CRITICAL GATES** (verify before ANY implementation):
 - [ ] Fix approach selected by user in Phase 4
-- [ ] Plan approved via `AskUserQuestion` in Phase 5
+- [ ] Plan approved by user in Phase 5
 
 If either gate is missing, STOP and complete the required phase first.
 
@@ -814,10 +824,19 @@ If either gate is missing, STOP and complete the required phase first.
 **IMPORTANT**: Present the FULL output from test-analyzer agent to the user - do NOT summarize or condense the test proposals. The user needs complete visibility into each proposed test case, its rationale, edge cases identified, and mocking requirements to make an informed decision about the testing strategy.
 
 ### Step 3: User Approval
-Use `AskUserQuestion` to get EXPLICIT confirmation:
-- Option 1: "Proceed with proposed testing strategy"
-- Option 2: "Modify testing scope" (user describes changes)
-- Option 3: "Skip testing phase" (only if testing is truly not feasible)
+Present options and ask user to type their choice:
+
+```
+How would you like to proceed with testing?
+
+1. Proceed with proposed testing strategy
+2. Modify testing scope
+3. Skip testing phase (only if testing is truly not feasible)
+
+Enter your choice (1, 2, or 3):
+```
+
+Wait for user to type their response.
 
 ### Step 4: Create TEST Tasks in Plan File
 
@@ -1017,10 +1036,25 @@ Display reconciled findings in a clear format:
 
 ### Step 7: User Selection
 
-Use `AskUserQuestion` with `multiSelect: true` to let user choose which issues to address:
-- List each issue as a selectable option
-- Group by severity in the question
-- Include "Skip all - proceed to summary" as an option
+Present numbered list of issues and ask user to type which to address:
+
+```
+Which issues would you like to address?
+
+[List each issue with a number, grouped by severity]
+Example:
+  Critical:
+    1. [FILE:LINE] Description
+    2. [FILE:LINE] Description
+  Important:
+    3. [FILE:LINE] Description
+
+  0. Skip all - proceed to summary
+
+Enter issue numbers to address (e.g., "1,2,3" or "1-3" or "all" or "0" to skip):
+```
+
+Wait for user to type their response. Parse the input to determine which issues to address.
 
 ### Step 8: Update Plan and Apply Selected Fixes
 
@@ -1036,11 +1070,18 @@ Use `AskUserQuestion` with `multiSelect: true` to let user choose which issues t
 
 ### Step 9: Offer Re-review
 
-If any fixes were applied, use `AskUserQuestion` to ask:
-- "Run review again to verify fixes?"
-- "Proceed to summary"
+If any fixes were applied, ask user to type their choice:
 
-If user chooses re-review, return to Step 3 with a focused scope.
+```
+Fixes have been applied. What would you like to do?
+
+1. Run review again to verify fixes
+2. Proceed to summary
+
+Enter your choice (1 or 2):
+```
+
+Wait for user to type their response. If user chooses "1", return to Step 3 with a focused scope.
 
 **Output**: Quality-verified fix with user-approved changes
 
